@@ -46,14 +46,21 @@ Initializing the Cloud File Browser is easy, pass in the documents json and opti
 documents takes the configuration of each element,
 
  Option 1) If an element instance token is present, pass in the elementToken for the element
+
  Option 2) If an element instance template is present pass in the template instance token as elementTemplate
- Option 3) You can pass in the 'apiKey', 'apiSecret' and 'callbackUrl'
+
+ Option 3) You can pass in the 'apiKey', 'apiSecret' and 'callbackUrl', which will create an element instance for you.
 
 make sure callbackUrl to configure for the provider is http://code.cloudfilebrowser.io/callback.html or <Your Domain>/callback.html based on how your importing the Cloud File Browser js
-    Supported documents providers are box, dropbox, googledrive, onedrive, sharepoint
 
-options takes the required header credentials of the Cloud Elements user, it needs Organization Secret, User secret and Account key of the user. Pass oSec for Organization Secret, uSec for User secret and aKey for Account key
-options takes another parameter callback, this is the callback function that's called when a file or files are selected or when an element instance is created. Callback function that's called sends type and data as arguments.
+Supported documents providers are box, dropbox, googledrive, onedrive, sharepoint
+
+options takes the required header credentials of the Cloud Elements user, it needs Organization Secret, User secret and Account key of the user.
+
+Pass oSec for Organization Secret, uSec for User secret and aKey for Account key
+
+options also takes another parameter 'callback', this is the callback function that's called when a file or files are selected or when an element instance is created.
+It sends type and data as arguments.
 
 ```html
 
@@ -124,13 +131,13 @@ options takes another parameter callback, this is the callback function that's c
   You can find the examples of using the Cloud File Browser under examples folder
 
 ###Example1
-    filebrowser1.html shows you how to use Cloud File Browser by downloading the source and using it in your web application
+filebrowser1.html shows you how to use Cloud File Browser by downloading the source and using it in your web application
 
 ###Example2
-    filebrowser2.html shows you how to use Cloud File Browser in a modal window
+filebrowser2.html shows you how to use Cloud File Browser in a modal window
 
 ###Example3
-    filebrowser1.html shows you how to use Cloud File Browser by importing the required code from cloudfilebrowser.io
+filebrowser1.html shows you how to use Cloud File Browser by importing the required code from cloudfilebrowser.io
 
 
 
@@ -138,7 +145,9 @@ options takes another parameter callback, this is the callback function that's c
 ##License
 
 ```
-All code licensed under the MIT License. All images licensed under Creative Commons Attribution 3.0 Unported License. In other words you are basically free to do whatever you want.
+All code licensed under the MIT License. All images licensed under Creative Commons Attribution 3.0 Unported License.
+
+In other words you are basically free to do whatever you want.
 
 Copyright 2012-2014 Cloud Elements <http://www.cloud-elements.com>
 
