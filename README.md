@@ -73,7 +73,7 @@ It sends type and data as arguments.
                 },
 
                 'dropbox': {
-                    'elementToken' : 'QutQPpIwc64HNzdvafBd6uFumBUxnPHzYsr/wC1LrXM='
+                    'elementTemplate' : 'QutQPpIwc64HNzdvafBd6uFumBUxnPHzYsr/wC1LrXM='
                 },
 
                 'googledrive': {
