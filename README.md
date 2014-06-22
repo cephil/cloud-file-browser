@@ -140,15 +140,22 @@ filebrowser2.html shows you how to use Cloud File Browser in a modal window
 filebrowser1.html shows you how to use Cloud File Browser by importing the required code from cloudfilebrowser.io
 
 
+##Code
+####lib/provision.js
+This JS file has all the API calls needed to connect to Cloud Elements API
+####lib/cloudfilebrowser.js
+This JS file has the complete UI design of the Cloud File Browser, you can customize this according to your needs
+####css/styles.css
+This CSS file has the styling of Cloud File Browser, you can customize this according to your application
+####css/normalize.css
+This CSS file has the styling of Cloud File Browser, you can customize this according to your application
 
+####lib/cfb.js
+This JS file is a single import script which loads all the required JS and CSS files for the Cloud File Browser
 
 ##License
 
 ```
-All code licensed under the MIT License. All images licensed under Creative Commons Attribution 3.0 Unported License.
-
-In other words you are basically free to do whatever you want.
-
 Copyright 2012-2014 Cloud Elements <http://www.cloud-elements.com>
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
