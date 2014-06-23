@@ -487,7 +487,7 @@ a.provision {
 /* ERROR BOX */
 /*************/
 #error {
-    -webkit-transition: all 250ms ease-in;
+    -webkit-transition: all 250ms ease;
     background: #e74c3c;
     border-radius: 8px;
     border-top: 1px solid #fff;
@@ -516,5 +516,12 @@ a.provision {
 #error.show {
     top: 50%;
     z-index: 5;
+    opacity:1;
+}
+
+#error span {
+    margin-left: 80px;
+    color: #fff;
+    line-height: 100px;
 }
  
