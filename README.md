@@ -1,27 +1,57 @@
-#Cloud File Browser
+###################################################################################
+##     Cloud File Browser                                                        ##
+###################################################################################
 
-##Demo
+Copyright 2012-2014 Cloud Elements <http://www.cloud-elements.com>          
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+
+
+##########################
+##         DEMO         ##
+##########################
 Cloud File Browser Demo  <http://cloudfilebrowser.io>
 
 
-##Description
+##########################
+##     Description      ##
+##########################
 Cloud File Browser is a javascript library to connect to Document Hub provider (e.g. Dropbox, Box, Google Drive) by creating Cloud Elements instances.
 
-##Requirements
+
+##########################
+##     Requirements     ##
+##########################
 jQuery 2+ <http://code.jquery.com/jquery-2.1.0.min.js>
 
 Setup and create of application for the document provider. Find the document for setting up application for the provider  <http://cloudfilebrowser.io/documentprovidersetup>
 
-##Setup
-You can use the Cloud File Browser by downloading the source and including in your application or you can use the hosted script
 
-Include the (minified) JavaScript cfb.min.js script in your HTML markup or the webpage
+##########################
+##         Setup        ##
+##########################
+
+## STEP 1 ##
+There are two ways of installing the required scripts for the Cloud File Browser:
+
+1. Include the (minified) JavaScript cfb.min.js script in your HTML HEAD tag, and the script will build all the required scripts on your page.
 
 ```html
 <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
 <script src="http://code.cloudfilebrowser.io/cfb.min.js"></script>
 ```
-or alternatively, include the lib, img, fonts, css folders and callback.html in your web application
+
+2. or alternatively, you may host the plugin by including the lib, img, fonts, css folders and callback.html in your web application.
 
 ```html
 
@@ -34,13 +64,20 @@ or alternatively, include the lib, img, fonts, css folders and callback.html in 
 <script src="lib//provision.js"></script>
 ```
 
+## STEP 2 ##
 Add a section where you would like the Cloud File Browser to show up in your page
 
 ```html
 <section class="cloudFileBrowser"></section>
 ```
 
-##Usage
+The required scripts and markup are ready to go!
+
+
+##########################
+##         Usage        ##
+##########################
+
 Initializing the Cloud File Browser is easy, pass in the documents json and options json to cloudFileBrowser({documents:documentsjson, options:optionsjson})
 
 documents takes the configuration of each element,
@@ -127,33 +164,47 @@ It sends type and data as arguments.
 
 ```
 
-##Options
-  You can find the examples of using the Cloud File Browser under examples folder
+##########################
+##       Examples       ##
+##########################
+
+You can find the examples of using the Cloud File Browser under examples folder
 
 ###Example1
-filebrowser1.html shows you how to use Cloud File Browser by downloading the source and using it in your web application
+filebrowser1.html shows you how to use Cloud File Browser by downloading the source and using it in your web application.
 
 ###Example2
-filebrowser2.html shows you how to use Cloud File Browser in a modal window
+filebrowser2.html shows you how to use Cloud File Browser in a modal window.
 
 ###Example3
-filebrowser1.html shows you how to use Cloud File Browser by importing the required code from cloudfilebrowser.io
+filebrowser1.html shows you how to use Cloud File Browser by importing the required code from cloudfilebrowser.io.
 
 
-##Code
+##########################
+##          Code        ##
+##########################
+
 ####lib/provision.js
-This JS file has all the API calls needed to connect to Cloud Elements API
+This JS file has all the API calls needed to connect to Cloud Elements API.
+
 ####lib/cloudfilebrowser.js
-This JS file has the complete UI design of the Cloud File Browser, you can customize this according to your needs
+This JS file has the complete UI design of the Cloud File Browser, you can customize this according to your needs.
+
 ####css/styles.css
-This CSS file has the styling of Cloud File Browser, you can customize this according to your application
+This CSS file has the styling of Cloud File Browser, you can customize this according to your application.
+There are two methods of customizing the styles, one by modifying 'styles.css', or by introducing a custom stylesheet with your application.
+
 ####css/normalize.css
-This CSS file has the styling of Cloud File Browser, you can customize this according to your application
+This CSS file is a browser normalization stylesheet, helping make all browsers read default styles similarly.
+More information can be found at: http://necolas.github.io/normalize.css/3.0.1/normalize.css
 
 ####lib/cfb.js
-This JS file is a single import script which loads all the required JS and CSS files for the Cloud File Browser
+This JS file is a single import script which loads all the required JS and CSS files for the Cloud File Browser.
 
-##License
+
+##########################
+##        License       ##
+##########################
 
 ```
 Copyright 2012-2014 Cloud Elements <http://www.cloud-elements.com>
