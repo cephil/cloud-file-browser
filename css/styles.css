@@ -433,11 +433,11 @@ a.provision {
 }
 
 #services-containers > div.provisioned > div.listTable > div.scrollPanel > ul.on {
-    -webkit-transform: scale(1) rotate(0deg);
-    -moz-transform: scale(1) rotate(0deg);
-    -o-transform: scale(1) rotate(0deg);
-    -ms-transform: scale(1) rotate(0deg);
-    transform: scale(1) rotate(0deg);
+    -webkit-transform: scale(1) rotateX(0deg);
+    -moz-transform: scale(1) rotateX(0deg);
+    -o-transform: scale(1) rotateX(0deg);
+    -ms-transform: scale(1) rotateX(0deg);
+    transform: scale(1) rotateX(0deg);
     
     -webkit-transition: all 250ms cubic-bezier(0.765, 0.010, 0.455, 1.305);
     -moz-transition: all 250ms cubic-bezier(0.765, 0.010, 0.455, 1.305);
@@ -449,11 +449,11 @@ a.provision {
 
 #services-containers > div.provisioned > div.listTable > div.scrollPanel > ul {
     -webkit-transform: rotateX(90deg) scale(.9);
-    -webkit-transform: scale(.9) rotate(90deg);
-    -moz-transform: scale(.9) rotate(90deg);
-    -o-transform: scale(.9) rotate(90deg);
-    -ms-transform: scale(.9) rotate(90deg);
-    transform: scale(.9) rotate(90deg);
+    -webkit-transform: scale(.9) rotateX(90deg);
+    -moz-transform: scale(.9) rotateX(90deg);
+    -o-transform: scale(.9) rotateX(90deg);
+    -ms-transform: scale(.9) rotateX(90deg);
+    transform: scale(.9) rotateX(90deg);
     
     -webkit-transition: all 250ms cubic-bezier(0.765, 0.010, 0.455, 1.305);
     -moz-transition: all 250ms cubic-bezier(0.765, 0.010, 0.455, 1.305);
