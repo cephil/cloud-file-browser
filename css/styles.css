@@ -203,10 +203,37 @@ a.provision {
     display: block;
     font-size: .9em;
     padding: 10px 15px;
+    text-indent: 30px;
+    position:relative;
 }
 
 .no-margin #tab-container > ul,
 .no-margin #tab-container > section { margin: 0 !important }
+
+/* ICONS FOR SERVICES TABS */
+#tab-container > ul > li:before {
+    background: url(../img/services-icons-sprite.png) no-repeat;
+    display:block;
+    content: '';
+    width:35px;
+    height:35px;
+    float:left;
+    position:absolute;
+    left:0px;
+    top:-2px;
+}
+#tab-container > ul > li.dropbox:before {
+    background-position:-35px 0;
+}
+#tab-container > ul > li.googledrive:before {
+    background-position:-70px 0;
+}
+#tab-container > ul > li.onedrive:before {
+    background-position:-105px 0;
+}
+#tab-container > ul > li.sharepoint:before {
+    background-position:-139px 0;
+}
 
 /**********************/
 /* LOGOS FOR SERVICES */
