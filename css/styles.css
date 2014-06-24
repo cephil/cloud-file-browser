@@ -147,7 +147,7 @@ a.provision {
     text-shadow: none;
 }
 
-#tab-container > #file-info > .preview:empty:before {
+#tab-container > #file-info > .preview:after {
     color: #444;
     content: '\f03e';
     display: block;
