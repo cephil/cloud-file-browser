@@ -2,6 +2,7 @@ var http = require("http");
 var https = require("https");
 var connect = require("connect");
 var express = require("express");
+var cookieParser = require("cookie-parser");
 var bodyParser = require("body-parser");
 var serveStatic = require("serve-static");
 
@@ -22,11 +23,34 @@ var allowCrossDomain = function(req, res, next) {
 };
 
 /////////////////////////////////////////////////
+// CONFIG ///////////////////////////////////////
+/////////////////////////////////////////////////
+
+    
+    //////////////////////////////////////////////////////////////////////////////////
+    // EXAMPLE USE ONLY                                                             //
+    //                                                                              //
+    // Note: Typically, you would want to store your Org Secret and User Secret     //
+    //       in a more secure manner than plain-text (e.g. Database). For example   //
+    //       purposes, we are storing it in the server as a string to show how you  //
+    //       would work with populated oSec and uSec variables.                     //
+    //////////////////////////////////////////////////////////////////////////////////
+
+    oSec = '98c89f16608df03b0248b74ecaf6a79b',
+    uSec = '846708bb4a1da71d70286bc5bb0c51bf',   
+    
+    // TODO: Pass this in from provision-node.js    
+    ele = 'd2d3ec396a33f70d00f91a27e46bdb24'
+    
+
+/////////////////////////////////////////////////
 // SERVER INIT //////////////////////////////////
 /////////////////////////////////////////////////
 app.use(allowCrossDomain);
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
+app.use(connect.cookieParser());
+app.use(connect.session({ secret: oSec }));
 
 
 /////////////////////////////////////////////////
@@ -36,9 +60,11 @@ app.use(bodyParser.json());
 var port = process.env.port || 8888;
 var router = express.Router();
 
-app.get('*', function(req, res) {
-    callAPI('Get', req.url, req.headers, function(data) {
-        console.log('callback recieved');
+app.all('*', function(req, res) {
+    callAPI('Get', req.url, req.headers, ele, function(data) {
+        console.log('callback recieved', req.session);
+        
+        console.log(req);
         res.json(data);
     });
 });
@@ -49,19 +75,7 @@ app.listen(port);
 // AUTHENTICATION ///////////////////////////////
 /////////////////////////////////////////////////
 
-callAPI = function(method, path, headers, cb) {
-    
-    //////////////////////////////////////////////////////////////////////////////////
-    // EXAMPLE USE ONLY                                                             //
-    //                                                                              //
-    // Note: Typically, you would want to store your Org Secret and User Secret     //
-    //       in a more secure manner than plain-text (e.g. Database). For example   //
-    //       purposes, we are storing it in the server as a string to show how you  //
-    //       would work with populated oSec and uSec variables.                     //
-    //////////////////////////////////////////////////////////////////////////////////
-    oSec = '98c89f16608df03b0248b74ecaf6a79b',
-    uSec = '846708bb4a1da71d70286bc5bb0c51bf',   
-    ele = 'd2d3ec396a33f70d00f91a27e46bdb24'
+callAPI = function(method, path, headers, ele, cb) {
     
     var options = {
         hostname: 'qa.cloud-elements.com',
