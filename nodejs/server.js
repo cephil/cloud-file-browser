@@ -7,28 +7,45 @@ var serveStatic = require("serve-static");
 
 var app = express();
 
+var allowCrossDomain = function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    // intercept OPTIONS method
+    if ('OPTIONS' == req.method) {
+      res.send(200);
+    }
+    else {
+      next();
+    }
+};
+app.use(allowCrossDomain);
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
 
 
 /////////////////////////////////////////////////
-// ROUTES FOR API ///////////////////////////////
+// ROUTER FOR API ///////////////////////////////
 /////////////////////////////////////////////////
 
 var port = process.env.port || 8888;
 var router = express.Router();
 
-router.get('/', function(req, res) {
-    res.json({ message: 'working api' });
+app.get('*', function(req, res) {
+    callAPI('Get', req.url, req.headers, function(data) {
+        console.log('callback recieved');
+        res.json(data);
+    });
 });
-app.use('/api', router);
+
 app.listen(port);
 
 /////////////////////////////////////////////////
 // AUTHENTICATION ///////////////////////////////
 /////////////////////////////////////////////////
 
-callAPI = function(method, path, headers) {
+callAPI = function(method, path, headers, cb) {
     
     oSec = '98c89f16608df03b0248b74ecaf6a79b',
     uSec = '846708bb4a1da71d70286bc5bb0c51bf',   
@@ -37,7 +54,7 @@ callAPI = function(method, path, headers) {
     var options = {
         hostname: 'qa.cloud-elements.com',
         port: 443,
-        path: '/elements/api-v2/hubs/documents/folders/contents?path=/',
+        path: path,
         method: 'GET',
         headers: { 
             'Authorization': 'Element ' + ele + ', User ' + uSec + ', Organization ' +oSec    
@@ -47,8 +64,9 @@ callAPI = function(method, path, headers) {
     var req = https.request(options, function(res) {
 
         res.setEncoding('utf8');
-        res.on('data', function (chunk) {
-            console.log('BODY: ' + chunk);
+        res.on('data', function (data) {
+            console.log('BODY: ' + data);
+            cb(JSON.parse(data));
         });
 
     });
@@ -57,19 +75,12 @@ callAPI = function(method, path, headers) {
         console.log('problem with request: ' + e);
     });
 
-    req.write('data\n');
     req.end();
     
 }
 
 /////////////////////////////////////////////////
-// INIT /////////////////////////////////////////
-/////////////////////////////////////////////////
-
-callAPI();
-
-/////////////////////////////////////////////////
-// SERVER START// ///////////////////////////////
+// SERVER START /////////////////////////////////
 /////////////////////////////////////////////////
 
 connect().use(serveStatic('www')).listen(8080);

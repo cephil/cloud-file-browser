@@ -84,7 +84,7 @@ var CloudElements = (function() {
             ceconfig = config;
 
             if(config.env == null || config.env == undefined) {
-                envUrl = 'https://console.cloud-elements.com/elements/'
+                envUrl = 'http://localhost:8888/elements/'
             }
             else {
                 envUrl = config.env;
@@ -309,6 +309,7 @@ var server = (function() {
             })
             .done(function(data) {
                 console.log(data);
+                
                 if(server.isNullAndUndef(data.results))
                     cb(data, cbArgs);
                 else
