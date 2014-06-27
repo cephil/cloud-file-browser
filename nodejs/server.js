@@ -20,6 +20,10 @@ var allowCrossDomain = function(req, res, next) {
       next();
     }
 };
+
+/////////////////////////////////////////////////
+// SERVER INIT //////////////////////////////////
+/////////////////////////////////////////////////
 app.use(allowCrossDomain);
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
@@ -47,6 +51,14 @@ app.listen(port);
 
 callAPI = function(method, path, headers, cb) {
     
+    //////////////////////////////////////////////////////////////////////////////////
+    // EXAMPLE USE ONLY                                                             //
+    //                                                                              //
+    // Note: Typically, you would want to store your Org Secret and User Secret     //
+    //       in a more secure manner than plain-text (e.g. Database). For example   //
+    //       purposes, we are storing it in the server as a string to show how you  //
+    //       would work with populated oSec and uSec variables.                     //
+    //////////////////////////////////////////////////////////////////////////////////
     oSec = '98c89f16608df03b0248b74ecaf6a79b',
     uSec = '846708bb4a1da71d70286bc5bb0c51bf',   
     ele = 'd2d3ec396a33f70d00f91a27e46bdb24'
@@ -55,7 +67,7 @@ callAPI = function(method, path, headers, cb) {
         hostname: 'qa.cloud-elements.com',
         port: 443,
         path: path,
-        method: 'GET',
+        method: method,
         headers: { 
             'Authorization': 'Element ' + ele + ', User ' + uSec + ', Organization ' +oSec    
         }
