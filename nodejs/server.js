@@ -50,9 +50,9 @@ var allowCrossDomain = function(req, res, next) {
             },
 
             'googledrive': {
-                'apiKey': '282923532784-mkr3pp81hpg3haqac31ki6fosbs66npk.apps.googleusercontent.com',
-                'apiSecret': 'uBdvo1WM2jTu2H33utjDd5v0',
-                'callbackUrl': 'http://localhost:63342/CloudFileBrowser/callback.html'
+                'apiKey': '282923532784-t89r45pvo4nuo49l6clpfa6b8mkkgnnu.apps.googleusercontent.com',
+                'apiSecret': 'uErA1R7L4BAxZdgKW20VcqpE',
+                'callbackUrl': 'http://localhost:8080/callback.html'
             },
 
 //            'onedrive' : {
@@ -95,7 +95,9 @@ app.all('*', function(req, res) {
     var parts = url.parse(req.url, true);
     var ele = parts.query['element'];
 
+    /////////////////////////////////////////////////
     //This request is for displaying the required providers on UI
+    /////////////////////////////////////////////////
     if(parts.pathname == '/elements/providers')
     {
         //Constructing the documents to be shown on UI
@@ -110,7 +112,9 @@ app.all('*', function(req, res) {
         }
         res.json(respdocuments);
     }
+    /////////////////////////////////////////////////
     //This method is used for getting the file contents (folders or files)
+    /////////////////////////////////////////////////
     else if(parts.pathname == '/elements/contents')
     {
         var params = {
@@ -121,16 +125,79 @@ app.all('*', function(req, res) {
             res.json(data);
         });
     }
+    /////////////////////////////////////////////////
     //This method is used for getting the download links for a file
-    else if(parts.pathname == '/elements/getFile')
+    /////////////////////////////////////////////////
+    else if(parts.pathname == '/elements/links')
     {
         var params = {
             'path' : parts.query['path']
         }
 
-        callAPI('Get', '/elements/api-v2/hubs/documents/folders/contents', getHeaders(ele), params, function(data) {
+        callAPI('Get', '/elements/api-v2/hubs/documents/files/links', getHeaders(ele), params, function(data) {
             res.json(data);
         });
+    }
+    /////////////////////////////////////////////////
+    // This method is for getting the OAuth URL for requesting the User access
+    /////////////////////////////////////////////////
+    else if(parts.pathname == '/elements/oauth')
+    {
+        var elementDetails = getElementDetails(ele);
+
+        var params = {
+            'elementKeyOrId': ele,
+            'apiKey' : elementDetails.apiKey,
+            'apiSecret': elementDetails.apiSecret,
+            'callbackUrl': elementDetails.callbackUrl
+        }
+
+        callAPI('Get', '/elements/api-v2/elements/'+ele+'/oauth', getHeaders(ele), params, function(data) {
+            res.json(data);
+        });
+    }
+    /////////////////////////////////////////////////
+    // This method is for creating the element instance after the user has approved the access
+    /////////////////////////////////////////////////
+    else if(parts.pathname == '/elements/instances')
+    {
+        var elementDetails = getElementDetails(ele);
+
+        console.log('Started....');
+        var elementProvision = {
+            'configs': [
+                {
+                    'key' : 'oauth.api.key',
+                    propertyValue : elementDetails.apiKey
+                },
+                {
+                    'key' : 'oauth.api.secret',
+                    propertyValue : elementDetails.apiSecret
+                },
+                {
+                    'key' : 'oauth.callback.url',
+                    propertyValue : elementDetails.callbackUrl
+                }
+            ],
+            'element': {
+                "key" : ele
+            },
+            'name': ele
+        };
+
+        var postdata = JSON.stringify(elementProvision);
+
+        var params = {
+            'code': parts.query['code']
+        }
+
+        callAPI('POST', '/elements/api-v2/instances', getHeaders(ele, postdata), params, function(data) {
+
+            setElementToken(ele, data.token);
+
+            res.json(data);
+
+        }, postdata);
     }
     else
     {
@@ -149,12 +216,10 @@ app.listen(port);
 // AUTHENTICATION ///////////////////////////////
 /////////////////////////////////////////////////
 
-getHeaders = function(element) {
-
-
+getHeaders = function(element, postdata) {
     var authVal = '';
 
-    if(element != null)
+    if(element != null && this.getElementToken(element) != null)
     {
         authVal +=  'Element ' + this.getElementToken(element)+ ', ';
     }
@@ -164,6 +229,12 @@ getHeaders = function(element) {
     var header = {
         'Authorization' : authVal
     };
+
+    if(postdata != null)
+    {
+        header['Content-Length']= postdata.length;
+        header['Content-Type'] = 'application/json';
+    }
     console.log(header);
     return header;
 },
@@ -173,7 +244,17 @@ getElementToken = function(element) {
     return documents[element].elementToken;
 },
 
-callAPI = function(method, path, headers, params, cb) {
+setElementToken = function(element, token) {
+
+    documents[element].elementToken = token;
+},
+
+getElementDetails = function(element) {
+
+    return documents[element];
+},
+
+callAPI = function(method, path, headers, params, cb, jsondata) {
 
     if(params != null)
     {
@@ -186,10 +267,9 @@ callAPI = function(method, path, headers, params, cb) {
         path: path,
         method: method,
         headers : headers
-//        headers: {
-//            'Authorization': 'Element d2d3ec396a33f70d00f91a27e46bdb24, User ' + userSecret + ', Organization ' +organizationSecret
-//        }
     };
+
+    console.log(options);
 
     var req = https.request(options, function(res) {
 
@@ -198,19 +278,18 @@ callAPI = function(method, path, headers, params, cb) {
             console.log('BODY: ' + data);
             cb(JSON.parse(data));
         });
-
     });
 
     req.on('error', function(e) {
         console.log('problem with request: ' + e);
     });
 
-//    if(params != null)
-//    {
-//        console.log(params);
-//        console.log(qs.stringify(params));
-//        req.write(qs.stringify(params));
-//    }
+    //For POST requests
+    if(jsondata != null)
+    {
+        req.write(jsondata);
+    }
+
     req.end();
     
 }

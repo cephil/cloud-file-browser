@@ -258,10 +258,10 @@ var cloudFileBrowser = (function() {
         displayThumbnail: function(data) {
 
             // CALL TO TEST STATUS OF URL
-
-            provision.testThumbnail(data.value, function(status) {
-
-                if (status == 'true') {
+            //TODO Check if we need test thumbnail call
+//            provision.testThumbnail(data.value, function(status) {
+//
+//                if (status == 'true') {
 
                     var extlower = extension.toLowerCase();
                     if (extlower == "jpg" | extlower == "gif" | extlower == "jpeg" | extlower == "png")
@@ -270,13 +270,13 @@ var cloudFileBrowser = (function() {
                         $('#file-info .preview').append('<img src="' + data.cloudElementsLink + '">');
                     }
 
-                }
-                else {
-                    //cloudFileBrowser.displayError("Couldn't display thumbnail. Please try again.");
-                    console.log('error connecting to thumbnail');
-                }
-
-            });
+//                }
+//                else {
+//                    //cloudFileBrowser.displayError("Couldn't display thumbnail. Please try again.");
+//                    console.log('error connecting to thumbnail');
+//                }
+//
+//            });
 
         },
 
@@ -293,7 +293,7 @@ var cloudFileBrowser = (function() {
             provision.createInstance(element, cloudFileBrowser.handleOnProvision, callbackArgs);
         },
 
-        handleOnProvision: function(elementToken, cbArgs) {
+        handleOnProvision: function(cbArgs) {
 
             var element = cbArgs.element;
 
