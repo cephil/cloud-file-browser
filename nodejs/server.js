@@ -163,7 +163,6 @@ app.all('*', function(req, res) {
     {
         var elementDetails = getElementDetails(ele);
 
-        console.log('Started....');
         var elementProvision = {
             'configs': [
                 {
@@ -194,6 +193,27 @@ app.all('*', function(req, res) {
         callAPI('POST', '/elements/api-v2/instances', getHeaders(ele, postdata), params, function(data) {
 
             setElementToken(ele, data.token);
+
+            res.json(data);
+
+        }, postdata);
+    }
+    /////////////////////////////////////////////////
+    // This method is for Uploading a file
+    /////////////////////////////////////////////////
+    else if(parts.pathname == '/elements/upload')
+    {
+
+        console.log(req.files);
+
+        var postdata = new FormData();
+        postdata.append('file', req.files);
+
+        var params = {
+            'path': parts.query['path']+'/'+req.files.name
+        }
+
+        callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele, postdata), params, function(data) {
 
             res.json(data);
 

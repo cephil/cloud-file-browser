@@ -293,9 +293,7 @@ var cloudFileBrowser = (function() {
             provision.createInstance(element, cloudFileBrowser.handleOnProvision, callbackArgs);
         },
 
-        handleOnProvision: function(cbArgs) {
-
-            var element = cbArgs.element;
+        handleOnProvision: function(element, cbArgs) {
 
             var callbackArgs = {
                 'element' : element,

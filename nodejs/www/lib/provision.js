@@ -207,7 +207,7 @@ var provision = (function() {
 
             _provision.setTokenToElement(cbArgs.element, data.token);
 
-            cbArgs.cbFun(cbArgs.cbArgs);
+            cbArgs.cbFun(cbArgs.cbArgs.element, cbArgs.cbArgs);
         },
 
         fileSelected: function(element, filepath) {
@@ -439,8 +439,7 @@ var server = (function() {
                 'cbArgs': cbArgs
             };
 
-            _server.callUpload('api-v2/hubs/documents/files?path='+path+'/'+file.name, 'POST',
-                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), tkn), params, this._uploadCallback, callbackArgs);
+            _server.callUpload('upload', 'POST', null, params, this._uploadCallback, callbackArgs);
         },
 
         _uploadCallback: function(data, callbackArgs) {
