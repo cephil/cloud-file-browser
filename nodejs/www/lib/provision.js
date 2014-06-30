@@ -1,23 +1,23 @@
 /*
-###################################################################################
-##     Cloud File Browser                                                        ##
-###################################################################################
+ ###################################################################################
+ ##     Cloud File Browser                                                        ##
+ ###################################################################################
 
-Copyright 2012-2014 Cloud Elements <http://www.cloud-elements.com>          
+ Copyright 2012-2014 Cloud Elements <http://www.cloud-elements.com>
 
-Licensed under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of
-the License at
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ use this file except in compliance with the License. You may obtain a copy of
+ the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-License for the specific language governing permissions and limitations under
-the License.
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ License for the specific language governing permissions and limitations under
+ the License.
 
-*/
+ */
 
 var CloudElements = (function() {
 
@@ -35,18 +35,6 @@ var CloudElements = (function() {
     return {
         getConfig: function() {
             return cedocumentconfig;
-        },
-
-        getOTkn: function() {
-            return oSec;
-        },
-
-        getUTkn: function() {
-            return uSec;
-        },
-
-        getAkey: function() {
-            return uSec;
         },
 
         getEnvUrl: function() {
@@ -76,13 +64,6 @@ var CloudElements = (function() {
 
         init: function(config) {
 
-            cedocumentconfig = config.documents;
-            oSec = config.oSec;
-            uSec = config.uSec;
-            aKey = config.aKey;
-            callback = config.callback;
-            ceconfig = config;
-
             if(config.env == null || config.env == undefined) {
                 envUrl = 'http://localhost:8888/elements/'
             }
@@ -90,9 +71,21 @@ var CloudElements = (function() {
                 envUrl = config.env;
             }
 
+            server.providers(CloudElements.initCallback);
+
+            callback = config.callback;
+
+            //TODO
+            ceconfig = config;
+        },
+
+        initCallback: function(data, cbArgs) {
+
+            cedocumentconfig = data;
+
             var docservices = [],
                 docservicesnames = [];
-            for(var x in cedocumentconfig)
+            for(var x in data)
             {
                 docservices.push(x);
                 docservicesnames.push(servicemapping[x]);
@@ -110,16 +103,18 @@ var CloudElements = (function() {
 
 var provision = (function() {
 
-     var lastCallbackArgs = null;
+    var lastCallbackArgs = null;
     _provision = {
+        isTokenPresentForElement: function(element) {
+            var eleObj = CloudElements.getConfig()[element];
+
+            return eleObj.present;
+
+        },
+
         getTokenForElement: function(element) {
             var eleObj = CloudElements.getConfig()[element];
             return eleObj['elementToken'];
-        },
-
-        getParentTokenForElement: function(element) {
-            var eleObj = CloudElements.getConfig()[element];
-            return eleObj['elementTemplate'];
         },
 
         getElementDetails: function(element) {
@@ -162,59 +157,34 @@ var provision = (function() {
     return {
 
         getDocuments: function(element, path, cb, cbArgs) {
-            server.list(_provision.getTokenForElement(element), path, cb, cbArgs);
+            server.list(element, path, cb, cbArgs);
         },
 
         createInstance: function(element, cb, cbArgs) {
 
             //Step 1 : Check if the element token is present, if so list the documents
-            var eleTkn = _provision.getTokenForElement(element);
-            if(eleTkn != null) {
-                cb(eleTkn, cbArgs);
+            if(_provision.isTokenPresentForElement(element)) {
+                cb(element, cbArgs);
                 return;
             }
 
-            //Step 2 : Check if Parent Token Exists, if so create an Instance using parent token
-            var prntTkn = _provision.getParentTokenForElement(element);
-            if(prntTkn != null && prntTkn != undefined) {
-
-                var win = window.open('', '_target');
-
-                var callbackArgs = {
-                    'cbFun' : cb,
-                    'cbArgs': cbArgs,
-                    'element': element,
-                    'win' : win
-                }
-                server.getOAuthUrlOnTemplate(element, prntTkn, provision.handleOnGetOAuthUrl, callbackArgs);
-
-                return;
+            //Step 2 : Check if API Key and Secret Exists, create an instance using those keys
+            var win = window.open('', '_target');
+            var callbackArgs = {
+                'cbFun' : cb,
+                'cbArgs': cbArgs,
+                'element': element,
+                'win' : win
             }
 
-            //Step 3 : Check if API Key and Secret Exists, create an instance using those keys
-            var elementDetails = _provision.getElementDetails(element);
-            if(elementDetails != null && elementDetails != undefined) {
+            server.getOAuthUrlOnAPIKey(element, provision.handleOnGetOAuthUrl, callbackArgs);
 
-                var win = window.open('', '_target');
-
-                var callbackArgs = {
-                    'cbFun' : cb,
-                    'cbArgs': cbArgs,
-                    'element': element,
-                    'win' : win,
-                    'elementDetails': elementDetails
-                }
-
-                server.getOAuthUrlOnAPIKey(element, elementDetails.apiKey, elementDetails.apiSecret,
-                    elementDetails.callbackUrl, provision.handleOnGetOAuthUrl, callbackArgs);
-
-                return;
-            }
+            return;
         },
 
         handleOnGetOAuthUrl: function(data, cbArgs) {
             lastCallbackArgs = cbArgs;
-            cbArgs.win.location.href = data.value;
+            cbArgs.win.location.href = data.oauthUrl;
         },
 
         processNextOnCallback: function(queryparams) {
@@ -237,16 +207,9 @@ var provision = (function() {
 
             //Provision the element and get elementToken
             var elementDetails = lastCallbackArgs.elementDetails;
-            if(elementDetails != null && elementDetails != undefined) {
-                //Provision as new
-                server.createInstance(ele, pageParameters.code, elementDetails.apiKey,
-                    elementDetails.apiSecret, elementDetails.callbackUrl, provision.handleOnCreateInstanceCall, cbArgs);
-            }
-            else {
-                //Provision using a Parent Token
-                server.createInstanceOnParent(ele, pageParameters.code,
-                    _provision.getParentTokenForElement(ele), provision.handleOnCreateInstanceCall, cbArgs)
-            }
+            //Provision as new
+            server.createInstance(ele, pageParameters.code, elementDetails.apiKey,
+                elementDetails.apiSecret, elementDetails.callbackUrl, provision.handleOnCreateInstanceCall, cbArgs);
         },
 
         handleOnCreateInstanceCall: function(data, cbArgs) {
@@ -268,11 +231,11 @@ var provision = (function() {
         downloadFile: function(element, filepath) {
             server.downloadFile(_provision.getTokenForElement(element), filepath);
         },
-        
+
         displayFile: function(element, filepath, cb, cbArgs) {
             server.displayThumbnail(_provision.getTokenForElement(element), filepath, cb, cbArgs);
         },
-        
+
         testThumbnail: function(url, cb) {
             server.testThumbnail(url, cb);
         },
@@ -285,7 +248,7 @@ var provision = (function() {
 })();
 
 var server = (function() {
-    
+
     /**
      * Element Server private object
      * @type {Object}
@@ -307,19 +270,18 @@ var server = (function() {
                 cache: false,
                 contentType: 'application/json'
             })
-            .done(function(data) {
-                console.log(data);
-                
-                if(server.isNullAndUndef(data.results))
-                    cb(data, cbArgs);
-                else
-                    cb(data.results, cbArgs);
+                .done(function(data) {
+                    console.log(data);
+                    if(server.isNullAndUndef(data.results))
+                        cb(data, cbArgs);
+                    else
+                        cb(data.results, cbArgs);
 
-            })
-            .error(function(data){
-                console.log(data.status + ' error on ' + path);
-                _server.handleFailure(data, cb, cbArgs);
-            });
+                })
+                .error(function(data){
+                    console.log(data.status + ' error on ' + path);
+                    _server.handleFailure(data, cb, cbArgs);
+                });
         },
 
         callUpload: function(path, methodtype, headers, params, cb, cbArgs) {
@@ -347,34 +309,34 @@ var server = (function() {
                     _server.handleFailure(data, cb, cbArgs);
                 });
         },
-        
+
         callThumbnail: function(url, cb) {
-        
-                var proxy = $.ajax({
-                    url: url,
-                    type: 'Get',
-                    cache: false
-                })
+
+            var proxy = $.ajax({
+                url: url,
+                type: 'Get',
+                cache: false
+            })
                 .done(function(data) {
                     console.log(data);
                     cb('true');
                 })
                 .error(function(data) {
-                    
+
                     // Temporary catch for X-DOMAIN
                     if (data.status === 0) {
                         cb('true');
                     }
-                    else {    
+                    else {
                         cb('false');
                         cloudFileBrowser.displayError('Error loading thumbnail!');
                     }
                 });
-        
+
         },
 
         handleFailure: function(response, cb, cbArgs)
-        {   
+        {
             if (response.status == -1)
             {
                 // This is a timeout, we can't expect an HTTP error code in the status field
@@ -382,7 +344,7 @@ var server = (function() {
                     'your request has timed out.' +
                     ' Please use your browser\'s refresh ' +
                     'button to try again. (' + response.statusText + ')');
-                
+
                 cloudFileBrowser.displayError(response.statusText);
             }
             else if (response.status == 0)
@@ -393,15 +355,15 @@ var server = (function() {
                     'your request cannot be processed.' +
                     ' Please use your browser\'s refresh button ' +
                     'to try again. (' + response.statusText + ')');
-                
+
                 cloudFileBrowser.displayError(response.statusText);
             }
             else
             {
-                if(server.isNullAndUndef(response.responseText))    
+                if(server.isNullAndUndef(response.responseText))
                 {
                     cb(response, cbArgs);
-                    
+
                     cloudFileBrowser.displayError(response.statusText);
                 }
                 else
@@ -409,7 +371,7 @@ var server = (function() {
                     console.error('The server was unable to process this request. ' +
                         'Please contact your representative. (' +
                         response.status + '/' + response.statusText + ')');
-                    
+
                     cloudFileBrowser.displayError(response.statusText);
                 }
             }
@@ -427,47 +389,23 @@ var server = (function() {
             return (variable == null || variable == undefined);
         },
 
-        authHeader: function(uSec, oSec, eleTmplet, eleTkn) {
-
-            var aHeader='';
-
-            if(!this.isNullAndUndef(uSec)) {
-                aHeader += 'User '+uSec;
-            }
-
-            if(!this.isNullAndUndef(oSec)) {
-                aHeader += ', Organization '+oSec;
-            }
-
-            if(!this.isNullAndUndef(eleTmplet)) {
-                aHeader += ', ParentElement '+eleTmplet;
-            }
-
-            if(!this.isNullAndUndef(eleTkn)) {
-
-                if(aHeader.length > 0) {
-                    aHeader += ', Element '+eleTkn;
-                }
-                else {
-                    aHeader += 'Element '+eleTkn;
-                }
-            }
-
-            return {
-                "Authorization" : aHeader
-            };
+        providers: function(cb, cbArgs) {
+            _server.call('providers', 'Get', null, null, cb, cbArgs);
         },
 
-        list: function(tkn, path, cb, cbArgs) {
+        list: function(element, path, cb, cbArgs) {
 
             var params = {
-                'path' : path
+                'path' : path,
+                'element': element
             }
 
-            _server.call('api-v1/document/list', 'Get', this.authHeader(null, null, null, tkn), params, cb, cbArgs);
+            _server.call('contents', 'Get', null, params, cb, cbArgs);
         },
 
         _downloadCallback: function(data) {
+//            var win = window.open();
+//            win.location=data.value;
 
             var hiddenIFrameID = 'hiddenDownloader',
                 iframe = document.getElementById(hiddenIFrameID);
@@ -477,7 +415,7 @@ var server = (function() {
                 iframe.style.display = 'none';
                 document.body.appendChild(iframe);
             }
-            iframe.src = data.value;
+            iframe.src = data.cloudElementsLink;
         },
 
         getFile: function(tkn, path, cb, cbArgs) {
@@ -486,7 +424,8 @@ var server = (function() {
                 'path' : path
             }
 
-            _server.call('api-v1/document/get', 'Get', this.authHeader(null, null, null, tkn), params, cb, cbArgs);
+            _server.call('api-v2/hubs/documents/files', 'Get',
+                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), tkn), params, cb, cbArgs);
         },
 
         downloadFile: function(tkn, path, cb, cbArgs) {
@@ -495,18 +434,20 @@ var server = (function() {
                 'path' : path
             }
 
-            _server.call('api-v1/document/getDownloadLink', 'Get', this.authHeader(null, null, null, tkn), params, this._downloadCallback, cbArgs);
+            _server.call('api-v2/hubs/documents/files/links', 'Get',
+                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), tkn), params, this._downloadCallback, cbArgs);
         },
-        
+
         displayThumbnail: function(tkn, path, cb, cbArgs) {
-            
+
             var params = {
                 'path' : path
             }
-            
-            _server.call('api-v1/document/getDownloadLink', 'Get', this.authHeader(null, null, null, tkn), params, cb, cbArgs);
+
+            _server.call('api-v2/hubs/documents/files/links', 'Get',
+                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), tkn), params, cb, cbArgs);
         },
-        
+
         testThumbnail: function(url, cb) {
             _server.callThumbnail(url, cb);
         },
@@ -521,7 +462,8 @@ var server = (function() {
                 'cbArgs': cbArgs
             };
 
-            _server.callUpload('api-v1/document/uploadFile?path='+path, 'POST', this.authHeader(null, null, null, tkn), params, this._uploadCallback, callbackArgs);
+            _server.callUpload('api-v2/hubs/documents/files?path='+path+'/'+file.name, 'POST',
+                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), tkn), params, this._uploadCallback, callbackArgs);
         },
 
         _uploadCallback: function(data, callbackArgs) {
@@ -531,59 +473,26 @@ var server = (function() {
             callbackArgs.cb(callbackArgs.cbArgs);
         },
 
-        getOAuthUrlOnTemplate: function(element, prntTkn, cb, cbArgs) {
-
-            _server.call('api-v1/provisioning/1/getOAuthUrl', 'Get',
-                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), prntTkn, null), null, cb, cbArgs);
-        },
-
-        getOAuthUrlOnAPIKey: function(element, apiKey, apiSec, callbackUrl, cb, cbArgs) {
+        getOAuthUrlOnAPIKey: function(element, cb, cbArgs) {
 
             var parameters = {
-                'elementKey': element,
-                'apiKey' : apiKey,
-                'apiSecret': apiSec,
-                'callbackUrl': callbackUrl
-            };
-            
-            _server.call('api-v1/provisioning/1/getOAuthUrl', 'Get',
-                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), null, null), parameters, cb, cbArgs);
-        },
-
-        createInstanceOnParent: function(element, code, prntTkn, cb, cbArgs) {
-
-            var elementProvision = {
-                //'provisionConfigs': provisionConfigs,
-                'element': {
-                    "key" : element
-                },
-                'name': element
+                'element': element
             };
 
-            var parameters = {
-                'instance' : elementProvision,
-                'resellerConfig': true,
-                'code': code,
-                'account':{
-                    'key' : CloudElements.getAkey()
-                }
-            };
-
-            _server.call('api-v1/provisioning/1/createAccountWithInstance', 'POST',
-                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), prntTkn, null), JSON.stringify(parameters), cb, cbArgs);
+            _server.call('api-v2/elements/'+element+'/oauth', 'Get', parameters, cb, cbArgs);
         },
 
         createInstance: function(element, code, apiKey, apiSec, callbackUrl, cb, cbArgs) {
 
             var elementProvision = {
-                'provisionConfigs': [
+                'configs': [
                     {
                         'key' : 'oauth.api.key',
-                         propertyValue : apiKey
+                        propertyValue : apiKey
                     },
                     {
                         'key' : 'oauth.api.secret',
-                         propertyValue : apiSec
+                        propertyValue : apiSec
                     },
                     {
                         'key' : 'oauth.callback.url',
@@ -596,17 +505,8 @@ var server = (function() {
                 'name': element
             };
 
-            var parameters = {
-                'instance' : elementProvision,
-                'resellerConfig': true,
-                'code': code,
-                'account':{
-                    'key' : CloudElements.getAkey()
-                }
-            };
-
-            _server.call('api-v1/provisioning/1/createAccountWithInstance', 'POST',
-                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), null, null), JSON.stringify(parameters), cb, cbArgs);
+            _server.call('api-v2/instances?code='+code, 'POST',
+                this.authHeader(CloudElements.getUTkn(), CloudElements.getOTkn(), null), JSON.stringify(elementProvision), cb, cbArgs);
         }
 
     }
