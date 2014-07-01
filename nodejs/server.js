@@ -259,32 +259,30 @@ app.all('*', function(req, res) {
         var params = {};
         var headers = {};
 
-        form.parse(req, function(err, fields, files) {
+                var data = '';
+        
+        req.on('data', function(chunk) {
+            data += chunk;
             
-            res.writeHead(200, {'content-type': 'text/plain'});
-            res.write('recieved upload:\n\n');
-            
-            console.log(util.inspect(files, {showHidden: false, depth: null}));
-            
-            if (parts.query['path'] === '/') {
-                params = {
-                    'path': '/'+files
-                }
-            }
-            else {
-                params = {
-                    'path': parts.query['path']+'/'+files
-                }
-            }
-            
-            headers = getHeaders(ele, files);
-            
-            res.end(util.inspect({field: fields, files: files}));
-            
-            callAPI('POST', '/elements/api-v2/hubs/documents/files', headers, params, function(data) {
+            callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
                 console.log(data);
-            }, null);
-
+            }, data);
+        });
+        
+        console.log(data);
+        
+        req.pi
+        
+        req.on('end', function()  {
+            util.log('raw: ' + data);
+            
+            var json = qs.parse(data);
+            
+            util.log('json: ' + json);
+            
+            /*callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
+                console.log(data);
+            }, data);*/
         });
         
         return;
@@ -396,14 +394,14 @@ getHeaders = function(element, postdata) {
         'Authorization' : authVal
     };
 
-    if(postdata != null)
+    /*if(postdata != null)
     {
         for (var key in postdata.file[0].headers) {
             header[key] = postdata.file[0].headers[key];
         }
         
         header['content-length'] = postdata.file[0].size; 
-    }
+    }*/
     
     return header;
 },
@@ -435,7 +433,8 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
         port: 443,
         path: path,
         method: method,
-        headers : headers
+        headers : headers,
+        body: jsondata
     };
 
     console.log(options);
@@ -461,6 +460,10 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
 
     req.end();
     
+},
+    
+uploadComplete = function(err, res, body) {
+    console.log(body);   
 }
 
 /////////////////////////////////////////////////
