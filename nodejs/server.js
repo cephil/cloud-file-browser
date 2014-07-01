@@ -7,6 +7,9 @@ var bodyParser = require("body-parser");
 var serveStatic = require("serve-static");
 var url = require("url");
 var qs = require('querystring');
+var Busboy = require('busboy');
+var rest = require('restler');
+
 
 var app = express();
 
@@ -203,21 +206,71 @@ app.all('*', function(req, res) {
     /////////////////////////////////////////////////
     else if(parts.pathname == '/elements/upload')
     {
-
+        console.log(req.body);
         console.log(req.files);
 
-        var postdata = new FormData();
-        postdata.append('file', req.files);
+        var busboy = new Busboy({ headers: req.headers });
+        busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+            console.log('File [' + fieldname + ']: filename: ' + filename + ', encoding: ' + encoding + ', mimetype: ' + mimetype);
+            var datalength = 0;
+            file.on('data', function(data) {
+                datalength += data.length;
+                console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
+            });
 
-        var params = {
-            'path': parts.query['path']+'/'+req.files.name
-        }
+            file.on('end', function() {
+                console.log('File [' + fieldname + '] Finished');
 
-        callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele, postdata), params, function(data) {
+                var params = {
+                    'path': parts.query['path']+'/'+filename
+                }
 
-            res.json(data);
+//                callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
+//
+//                    res.json(data);
+//
+//                }, file);
+                var headers = getHeaders(ele);
+                headers['Content-Length']= datalength;
 
-        }, postdata);
+                console.log(headers);
+
+//                var options = {
+//                    host : 'qa.cloud-elements.com',
+//                    port : 443,
+//                    path : parts.query['path']+'/'+filename,
+//                    method : 'PUT',
+//                    encoding : 'utf8'
+//                };
+//
+//                postData(null, [{type: mimetype, keyname: fieldname, valuename: filename, data: file}], options, headers, this);
+
+
+//                rest.post('https://qa.cloud-elements.com/elements/api-v2/hubs/documents/files?path='+parts.query['path']+'/'+filename, {
+//                    multipart: true,
+//                    headers : header,
+//                    contentType: false,
+////                    data: {
+////                        'file': file
+////                    }
+//                    data: [{type: mimetype, keyname: fieldname, valuename: filename, data: file}]
+//                }).
+//                on('complete', function(data) {
+//                    console.log(data);
+//                });
+            });
+        });
+//        busboy.on('field', function(fieldname, val, fieldnameTruncated, valTruncated) {
+//            console.log('Field [' + fieldname + ']: value: ' + inspect(val));
+//        });
+//        busboy.on('finish', function() {
+//            console.log('Done parsing form!');
+//            res.writeHead(303, { Connection: 'close', Location: '/' });
+//            res.end();
+//        });
+
+        req.pipe(busboy);
+
     }
     else
     {

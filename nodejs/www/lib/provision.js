@@ -227,7 +227,7 @@ var provision = (function() {
         },
 
         uploadFile: function(element, filepath, fileData, cb, cbArgs) {
-            server.uploadFile(_provision.getTokenForElement(element), filepath, fileData, cb, cbArgs);
+            server.uploadFile(element, filepath, fileData, cb, cbArgs);
         }
     };
 
@@ -429,7 +429,7 @@ var server = (function() {
             _server.callThumbnail(url, cb);
         },
 
-        uploadFile: function(tkn, path, file, cb, cbArgs) {
+        uploadFile: function(element, path, file, cb, cbArgs) {
 
             var params = new FormData();
             params.append('file', file);
@@ -439,7 +439,7 @@ var server = (function() {
                 'cbArgs': cbArgs
             };
 
-            _server.callUpload('upload', 'POST', null, params, this._uploadCallback, callbackArgs);
+            _server.callUpload('upload?element='+element+'&path='+path, 'POST', null, params, this._uploadCallback, callbackArgs);
         },
 
         _uploadCallback: function(data, callbackArgs) {
