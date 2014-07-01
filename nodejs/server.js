@@ -1,3 +1,44 @@
+/*
+###################################################################################
+##     Cloud File Browser                                                        ##
+###################################################################################
+
+Copyright 2012-2014 Cloud Elements <http://www.cloud-elements.com>          
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+
+*/
+
+/////////////////////////////////////////////////
+// NODEJS SERVER EXAMPLE ////////////////////////
+/////////////////////////////////////////////////
+/*
+
+    The Following is an example server on how to route
+    REST calls from the Cloud File Browser to the Cloud
+    Elements API while keeping your User Secret and
+    Organization Secret hidden from the end user.
+    
+    For this example, we're using Node.js in combination
+    with Express and Connect. The basics of what we're
+    doing here is catching ANY request that comes into
+    localhost:8888 and transforming the request into
+    a valid Cloud Elements API request -- This way,
+    we're able to keep the URL paths consistent across
+    a number of different platforms.
+
+*/
+
 var http = require("http");
 var https = require("https");
 var connect = require("connect");
@@ -71,6 +112,7 @@ var allowCrossDomain = function(req, res, next) {
 /////////////////////////////////////////////////
 // SERVER INIT //////////////////////////////////
 /////////////////////////////////////////////////
+    
 app.use(allowCrossDomain);
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
