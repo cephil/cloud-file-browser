@@ -51,6 +51,9 @@ var qs = require('querystring');
 var Busboy = require('busboy');
 var rest = require('restler');
 
+var multiparty = require('multiparty');
+var util = require('util');
+
 
 var app = express();
 
@@ -116,6 +119,7 @@ var allowCrossDomain = function(req, res, next) {
 app.use(allowCrossDomain);
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
+//app.use(bodyParser({ keepExtensions: true, uploadDir: "/elements/upload" }));  
 app.use(connect.cookieParser());
 app.use(connect.session({ secret: organizationSecret }));
 
@@ -195,7 +199,7 @@ app.all('*', function(req, res) {
             'apiKey' : elementDetails.apiKey,
             'apiSecret': elementDetails.apiSecret,
             'callbackUrl': elementDetails.callbackUrl
-        }
+        } 
 
         callAPI('Get', '/elements/api-v2/elements/'+ele+'/oauth', getHeaders(ele), params, function(data) {
             res.json(data);
@@ -250,7 +254,43 @@ app.all('*', function(req, res) {
     {
         console.log(req.body);
         console.log(req.files);
+        
+        var form = new multiparty.Form();
+        var params = {};
+        var headers = {};
 
+        form.parse(req, function(err, fields, files) {
+            
+            res.writeHead(200, {'content-type': 'text/plain'});
+            res.write('recieved upload:\n\n');
+            
+            console.log(util.inspect(files, {showHidden: false, depth: null}));
+            
+            if (parts.query['path'] === '/') {
+                params = {
+                    'path': '/'+files
+                }
+            }
+            else {
+                params = {
+                    'path': parts.query['path']+'/'+files
+                }
+            }
+            
+            headers = getHeaders(ele, files);
+            
+            res.end(util.inspect({field: fields, files: files}));
+            
+            callAPI('POST', '/elements/api-v2/hubs/documents/files', headers, params, function(data) {
+                console.log(data);
+            }, null);
+
+        });
+        
+        return;
+        
+  /*      var params = {};
+        
         var busboy = new Busboy({ headers: req.headers });
         busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
             console.log('File [' + fieldname + ']: filename: ' + filename + ', encoding: ' + encoding + ', mimetype: ' + mimetype);
@@ -262,9 +302,16 @@ app.all('*', function(req, res) {
 
             file.on('end', function() {
                 console.log('File [' + fieldname + '] Finished');
-
-                var params = {
-                    'path': parts.query['path']+'/'+filename
+                
+                if (parts.query['path'] === '/') {
+                    params = {
+                        'path': '/'+filename
+                    }
+                }
+                else {
+                    params = {
+                        'path': parts.query['path']+'/'+filename
+                    }
                 }
 
 //                callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
@@ -301,6 +348,11 @@ app.all('*', function(req, res) {
 //                    console.log(data);
 //                });
             });
+
+            console.log('path params: ', params);
+
+            
+            file.pipe(fs.createWriteStream(params.path));
         });
 //        busboy.on('field', function(fieldname, val, fieldnameTruncated, valTruncated) {
 //            console.log('Field [' + fieldname + ']: value: ' + inspect(val));
@@ -310,9 +362,8 @@ app.all('*', function(req, res) {
 //            res.writeHead(303, { Connection: 'close', Location: '/' });
 //            res.end();
 //        });
-
         req.pipe(busboy);
-
+*/
     }
     else
     {
@@ -347,10 +398,13 @@ getHeaders = function(element, postdata) {
 
     if(postdata != null)
     {
-        header['Content-Length']= postdata.length;
-        header['Content-Type'] = 'application/json';
+        for (var key in postdata.file[0].headers) {
+            header[key] = postdata.file[0].headers[key];
+        }
+        
+        header['content-length'] = postdata.file[0].size; 
     }
-    console.log(header);
+    
     return header;
 },
 
