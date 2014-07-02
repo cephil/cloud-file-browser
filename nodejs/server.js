@@ -260,23 +260,37 @@ app.all('*', function(req, res) {
         //var params = {};
         var headers = getHeaders(ele);
         var data = '';
-        
-        if(params != null)
-        {
-            path +='?'+qs.stringify(params);
-        }
-        
+
         req.on('data', function(chunk) {
             data += chunk;
-        
-            console.log(data);
+            //console.log(data);
         });
-        
-        
+
+        //TODO Set the filename correctly
+        var filename = data.filename;
+        //console.log(filename);
+
+        if (parts.query['path'] === '/') {
+            params = {
+                'path': '/'+filename
+            }
+        }
+        else {
+            params = {
+                'path': parts.query['path']+'/'+filename
+            }
+        }
+
+        var reqpath = '/elements/api-v2/hubs/documents/files';
+        if(params != null)
+        {
+            reqpath +='?'+qs.stringify(params);
+        }
+
         var options = {
             hostname: 'qa.cloud-elements.com',
             port: 443,
-            path: '/elements/api-v2/hubs/documents/files',
+            path: reqpath,
             method: 'POST',
             headers : headers,
             body: data
@@ -293,7 +307,7 @@ app.all('*', function(req, res) {
                 data += chunk;
                 //cb(JSON.parse(data));
                 
-                console.log('data recieved: ', data);
+                //console.log('data recieved: ', data);
             });
         });
 
