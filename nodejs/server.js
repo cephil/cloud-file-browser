@@ -266,54 +266,55 @@ app.all('*', function(req, res) {
             //console.log(data);
         });
 
-        //TODO Set the filename correctly
-        var filename = data.filename;
-        //console.log(filename);
+        var filename ='';
 
-        if (parts.query['path'] === '/') {
-            params = {
-                'path': '/'+filename
+        req.on('end', function()  {
+            console.log('Inside end' +  parts.query['filename']);
+            if (parts.query['path'] === '/') {
+                params = {
+                    'path': '/'+parts.query['filename']
+                }
             }
-        }
-        else {
-            params = {
-                'path': parts.query['path']+'/'+filename
+            else {
+                params = {
+                    'path': parts.query['path']+'/'+parts.query['filename']
+                }
             }
-        }
 
-        var reqpath = '/elements/api-v2/hubs/documents/files';
-        if(params != null)
-        {
-            reqpath +='?'+qs.stringify(params);
-        }
+            var reqpath = '/elements/api-v2/hubs/documents/files';
+            if(params != null)
+            {
+                reqpath +='?'+qs.stringify(params);
+            }
 
-        var options = {
-            hostname: 'qa.cloud-elements.com',
-            port: 443,
-            path: reqpath,
-            method: 'POST',
-            headers : headers,
-            body: data
-        };
+            var options = {
+                hostname: 'qa.cloud-elements.com',
+                port: 443,
+                path: reqpath,
+                method: 'POST',
+                headers : headers,
+                body: data
+            };
 
-        console.log(options);
-        //console.log(req);
+            var req = https.request(options, function(res) {
 
-        var req = https.request(options, function(res) {
-
-            res.setEncoding('utf8');
-            res.on('data', function (chunk) {
-                //console.log('BODY: ' + data);
-                data += chunk;
-                //cb(JSON.parse(data));
-                
-                //console.log('data recieved: ', data);
+                res.setEncoding('utf8');
+                res.on('data', function (data) {
+                    //console.log('BODY: ' + data);
+                    //data += chunk;
+                    console.log(data);
+                    res.json(data);
+                    //console.log('data recieved: ', data);
+                });
             });
+
+            req.on('error', function(e) {
+                console.log('problem with request: ' + e);
+            });
+
         });
 
-        req.on('error', function(e) {
-            console.log('problem with request: ' + e);
-        });
+
 
         //For POST requests
         /*if(jsondata != null)
@@ -321,7 +322,7 @@ app.all('*', function(req, res) {
             req.write(jsondata);
         }*/
 
-        req.end();
+        //req.end();
         
         
        /* req.on('data', function(chunk) {

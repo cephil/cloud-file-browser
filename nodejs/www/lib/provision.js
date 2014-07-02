@@ -440,7 +440,7 @@ var server = (function() {
                 'cbArgs': cbArgs
             };
 
-            _server.callUpload('upload?element='+element+'&path='+path, 'POST', null, params, this._uploadCallback, callbackArgs);
+            _server.callUpload('upload?element='+element+'&path='+path+'&filename='+file.name, 'POST', null, params, this._uploadCallback, callbackArgs);
         },
 
         _uploadCallback: function(data, callbackArgs) {
