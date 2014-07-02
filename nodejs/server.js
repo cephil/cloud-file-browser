@@ -270,21 +270,19 @@ app.all('*', function(req, res) {
 
         req.on('end', function()  {
             console.log('Inside end' +  parts.query['filename']);
+            var extendedpath = null;
+
             if (parts.query['path'] === '/') {
-                params = {
-                    'path': '/'+parts.query['filename']
-                }
+                extendedpath = '/'+parts.query['filename'];
             }
             else {
-                params = {
-                    'path': parts.query['path']+'/'+parts.query['filename']
-                }
+                extendedpath = parts.query['path']+'/'+parts.query['filename'];
             }
 
             var reqpath = '/elements/api-v2/hubs/documents/files';
-            if(params != null)
+            if(extendedpath != null)
             {
-                reqpath +='?'+qs.stringify(params);
+                reqpath +='?'+extendedpath;
             }
 
             var options = {
