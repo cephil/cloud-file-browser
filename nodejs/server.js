@@ -48,10 +48,10 @@ var bodyParser = require("body-parser");
 var serveStatic = require("serve-static");
 var url = require("url");
 var qs = require('querystring');
-var Busboy = require('busboy');
-var rest = require('restler');
+//var Busboy = require('busboy');
+//var rest = require('restler');
 
-var multiparty = require('multiparty');
+//var multiparty = require('multiparty');
 var util = require('util');
 
 
@@ -70,6 +70,7 @@ var allowCrossDomain = function(req, res, next) {
       next();
     }
 };
+
 
 /////////////////////////////////////////////////
 // CONFIG ///////////////////////////////////////
@@ -252,75 +253,72 @@ app.all('*', function(req, res) {
     /////////////////////////////////////////////////
     else if(parts.pathname == '/elements/upload')
     {
-        console.log(req);
-        //c0onsole.log(req.files);
-        console.log(parts);
-        
-       // var form = new multiparty.Form();
-        //var params = {};
         var headers = getHeaders(ele);
-        var data = '';
+        
+        var uploadParams = url.parse(req.url).search;
+        
+        var options = {
+            hostname: 'qa.cloud-elements.com',
+            port: 443,
+            path: '/elements/api-v2/hubs/documents/files' + uploadParams,
+            method: 'POST',
+            headers : headers
+        };
+        
+        /* options = {
+            hostname: 'www.google.com',
+            port: 443,
+            path: '/',
+            method: 'Get',
+            headers: headers
+        } */
+        
+        //console.log(url.parse(req.url));
+        //console.log(uploadParams);
+        
+        req.on('error', function() { console.log("got error!!!!!"); });
+        req.on('close', function() { console.log("got close!!!!!"); });
+
+        var reqOut = https.request(options, function(res) {
+            
+            console.log("connection established!");
+            console.log("got headers: ", res.headers);
+            console.log("got response code: ", res.statusCode);
+
+            res.setEncoding('utf8');
+            res.on('data', function (chunk) {
+                console.log('data recieved: ', chunk);
+            });
+            res.on('error', function (err) {
+                console.log('outgoing error', err);
+            });
+            res.on('end', function() {
+                console.log("res ended");
+            });
+        });
 
         req.on('data', function(chunk) {
-            data += chunk;
-            //console.log(data);
+            console.log(chunk);
+            reqOut.write(chunk);
+        });
+        
+        req.on('end', function() {
+            console.log("got end!!!!!");
+            reqOut.end();
         });
 
-        var filename ='';
-
-        req.on('end', function()  {
-            console.log('Inside end' +  parts.query['filename']);
-            var extendedpath = null;
-
-            if (parts.query['path'] === '/') {
-                extendedpath = '/'+parts.query['filename'];
-            }
-            else {
-                extendedpath = parts.query['path']+'/'+parts.query['filename'];
-            }
-
-            var reqpath = '/elements/api-v2/hubs/documents/files';
-            if(extendedpath != null)
-            {
-                reqpath +='?'+extendedpath;
-            }
-
-            var options = {
-                hostname: 'qa.cloud-elements.com',
-                port: 443,
-                path: reqpath,
-                method: 'POST',
-                headers : headers,
-                body: data
-            };
-
-            var req = https.request(options, function(res) {
-
-                res.setEncoding('utf8');
-                res.on('data', function (data) {
-                    //console.log('BODY: ' + data);
-                    //data += chunk;
-                    console.log(data);
-                    res.json(data);
-                    //console.log('data recieved: ', data);
-                });
-            });
-
-            req.on('error', function(e) {
-                console.log('problem with request: ' + e);
-            });
-
+        reqOut.on('error', function(e) {
+            console.log('problem with request: ' + e);
         });
-
-
-
+        
+        console.log("finished setup");
+        
         //For POST requests
         /*if(jsondata != null)
         {
             req.write(jsondata);
         }*/
 
-        //req.end();
         
         
        /* req.on('data', function(chunk) {
@@ -503,11 +501,10 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
         port: 443,
         path: path,
         method: method,
-        headers : headers,
-        body: jsondata
+        headers : headers
     };
 
-    console.log(options);
+    //console.log(options);
 
     var req = https.request(options, function(res) {
 
