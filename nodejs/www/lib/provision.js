@@ -272,6 +272,7 @@ var server = (function() {
 
         callUpload: function(path, methodtype, headers, params, cb, cbArgs) {
 
+            
             var proxy = $.ajax({
                 url: server.getUrl(path),
                 type: methodtype,
@@ -440,7 +441,7 @@ var server = (function() {
                 'cbArgs': cbArgs
             };
 
-            _server.callUpload('upload?element='+element+'&path='+path+'&filename='+file.name, 'POST', null, params, this._uploadCallback, callbackArgs);
+            _server.callUpload('upload?element='+element+'&path='+path+ '/' + file.name, 'POST', null, params, this._uploadCallback, callbackArgs);
         },
 
         _uploadCallback: function(data, callbackArgs) {

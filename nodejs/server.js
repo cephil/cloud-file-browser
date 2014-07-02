@@ -253,176 +253,15 @@ app.all('*', function(req, res) {
     /////////////////////////////////////////////////
     else if(parts.pathname == '/elements/upload')
     {
-        var headers = getHeaders(ele);
-        
-        var uploadParams = url.parse(req.url).search;
-        
-        var options = {
-            hostname: 'qa.cloud-elements.com',
-            port: 443,
-            path: '/elements/api-v2/hubs/documents/files' + uploadParams,
-            method: 'POST',
-            headers : headers
-        };
-        
-        /* options = {
-            hostname: 'www.google.com',
-            port: 443,
-            path: '/',
-            method: 'Get',
-            headers: headers
-        } */
-        
-        //console.log(url.parse(req.url));
-        //console.log(uploadParams);
-        
-        req.on('error', function() { console.log("got error!!!!!"); });
-        req.on('close', function() { console.log("got close!!!!!"); });
+        uploadFile('/elements/api-v2/hubs/documents/files', ele, req, function(data) {
 
-        var reqOut = https.request(options, function(res) {
-            
-            console.log("connection established!");
-            console.log("got headers: ", res.headers);
-            console.log("got response code: ", res.statusCode);
+            //setElementToken(ele, data.token);
 
-            res.setEncoding('utf8');
-            res.on('data', function (chunk) {
-                console.log('data recieved: ', chunk);
-            });
-            res.on('error', function (err) {
-                console.log('outgoing error', err);
-            });
-            res.on('end', function() {
-                console.log("res ended");
-            });
+            console.log(data);
+
+            res.json(data);
+
         });
-
-        req.on('data', function(chunk) {
-            console.log(chunk);
-            reqOut.write(chunk);
-        });
-        
-        req.on('end', function() {
-            console.log("got end!!!!!");
-            reqOut.end();
-        });
-
-        reqOut.on('error', function(e) {
-            console.log('problem with request: ' + e);
-        });
-        
-        console.log("finished setup");
-        
-        //For POST requests
-        /*if(jsondata != null)
-        {
-            req.write(jsondata);
-        }*/
-
-        
-        
-       /* req.on('data', function(chunk) {
-            data += chunk;
-        });
-        
-        //console.log(data);
-        
-        req.on('end', function()  {
-            //util.log('raw: ' + data);
-            
-            var json = qs.parse(data);
-            
-            //util.log('json: ' + util.inspect(json));
-            
-            callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
-                console.log('Uploade File Response: ' + data);
-            }, json);
-            
-            
-        
-            req.on('close', function() {
-                console.log('req closed');
-            });
-        });*/
-        
-        
-        return;
-        
-  /*      var params = {};
-        
-        var busboy = new Busboy({ headers: req.headers });
-        busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
-            console.log('File [' + fieldname + ']: filename: ' + filename + ', encoding: ' + encoding + ', mimetype: ' + mimetype);
-            var datalength = 0;
-            file.on('data', function(data) {
-                datalength += data.length;
-                console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
-            });
-
-            file.on('end', function() {
-                console.log('File [' + fieldname + '] Finished');
-                
-                if (parts.query['path'] === '/') {
-                    params = {
-                        'path': '/'+filename
-                    }
-                }
-                else {
-                    params = {
-                        'path': parts.query['path']+'/'+filename
-                    }
-                }
-
-//                callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
-//
-//                    res.json(data);
-//
-//                }, file);
-                var headers = getHeaders(ele);
-                headers['Content-Length']= datalength;
-
-                console.log(headers);
-
-//                var options = {
-//                    host : 'qa.cloud-elements.com',
-//                    port : 443,
-//                    path : parts.query['path']+'/'+filename,
-//                    method : 'PUT',
-//                    encoding : 'utf8'
-//                };
-//
-//                postData(null, [{type: mimetype, keyname: fieldname, valuename: filename, data: file}], options, headers, this);
-
-
-//                rest.post('https://qa.cloud-elements.com/elements/api-v2/hubs/documents/files?path='+parts.query['path']+'/'+filename, {
-//                    multipart: true,
-//                    headers : header,
-//                    contentType: false,
-////                    data: {
-////                        'file': file
-////                    }
-//                    data: [{type: mimetype, keyname: fieldname, valuename: filename, data: file}]
-//                }).
-//                on('complete', function(data) {
-//                    console.log(data);
-//                });
-            });
-
-            console.log('path params: ', params);
-
-            
-            file.pipe(fs.createWriteStream(params.path));
-        });
-//        busboy.on('field', function(fieldname, val, fieldnameTruncated, valTruncated) {
-//            console.log('Field [' + fieldname + ']: value: ' + inspect(val));
-//        });
-//        busboy.on('finish', function() {
-//            console.log('Done parsing form!');
-//            res.writeHead(303, { Connection: 'close', Location: '/' });
-//            res.end();
-//        });
-        req.pipe(busboy);
-*/
     }
     else
     {
@@ -452,8 +291,7 @@ getHeaders = function(element, postdata) {
     authVal += 'User ' + userSecret + ', Organization ' +organizationSecret
 
     var header = {
-        'Authorization' : authVal,
-        'Content-Type' : 'multipart/form-data'
+        'Authorization' : authVal
     };
 
     ////////////////////////////////////////////////
@@ -527,6 +365,71 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
 
     req.end();
     
+},
+    
+uploadFile = function(path, ele, req, cb) {
+        
+        var headers = getHeaders(ele);
+        var uploadParams = url.parse(req.url).search;
+        
+        headers['content-type'] = req.headers['content-type']
+        headers['content-length'] = req.headers['content-length']
+        
+        console.log('out headers: ', headers);
+        
+        var options = {
+            hostname: 'qa.cloud-elements.com',
+            port: 443,
+            path: '/elements/api-v2/hubs/documents/files' + uploadParams,
+            method: 'POST',
+            headers : headers
+        };
+
+        
+        console.log('options: ', options);
+        console.log('params: ', uploadParams);
+        
+        req.on('error', function() { console.log("got error!!!!!"); });
+        req.on('close', function() { console.log("got close!!!!!"); });
+
+        var reqOut = https.request(options, function(res) {
+            
+            var jsonData = '';
+            
+            console.log("connection established!");
+            console.log("got headers: ", res.headers);
+            console.log("got response code: ", res.statusCode);
+
+            res.setEncoding('utf8');
+            res.on('data', function (chunk) {
+                console.log('data recieved: ', chunk);
+                jsonData += chunk;
+            });
+            res.on('error', function (err) {
+                console.log('outgoing error', err);
+            });
+            res.on('end', function() {
+                console.log("res ended");
+                cb(JSON.parse(jsonData));
+            });
+        });
+
+        req.on('data', function(chunk) {
+            console.log(chunk);
+            console.log('chunk to string: ', chunk.toString());
+            reqOut.write(chunk.toString());
+        });
+        
+        req.on('end', function() {
+            console.log("got end!!!!!");
+            reqOut.end();
+        });
+
+        reqOut.on('error', function(e) {
+            console.log('problem with request: ' + e);
+        });
+        
+        console.log("finished setup");
 },
     
 uploadComplete = function(err, res, body) {
