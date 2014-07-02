@@ -252,38 +252,88 @@ app.all('*', function(req, res) {
     /////////////////////////////////////////////////
     else if(parts.pathname == '/elements/upload')
     {
-        console.log(req.body);
-        console.log(req.files);
+        console.log(req);
+        //c0onsole.log(req.files);
+        console.log(parts);
         
-        var form = new multiparty.Form();
-        var params = {};
-        var headers = {};
-
-                var data = '';
+       // var form = new multiparty.Form();
+        //var params = {};
+        var headers = getHeaders(ele);
+        var data = '';
+        
+        if(params != null)
+        {
+            path +='?'+qs.stringify(params);
+        }
         
         req.on('data', function(chunk) {
             data += chunk;
-            
-            callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
-                console.log(data);
-            }, data);
+        
+            console.log(data);
         });
         
-        console.log(data);
         
-        req.pi
+        var options = {
+            hostname: 'qa.cloud-elements.com',
+            port: 443,
+            path: '/elements/api-v2/hubs/documents/files',
+            method: 'POST',
+            headers : headers,
+            body: data
+        };
+
+        console.log(options);
+        //console.log(req);
+
+        var req = https.request(options, function(res) {
+
+            res.setEncoding('utf8');
+            res.on('data', function (chunk) {
+                //console.log('BODY: ' + data);
+                data += chunk;
+                //cb(JSON.parse(data));
+                
+                console.log('data recieved: ', data);
+            });
+        });
+
+        req.on('error', function(e) {
+            console.log('problem with request: ' + e);
+        });
+
+        //For POST requests
+        /*if(jsondata != null)
+        {
+            req.write(jsondata);
+        }*/
+
+        req.end();
+        
+        
+       /* req.on('data', function(chunk) {
+            data += chunk;
+        });
+        
+        //console.log(data);
         
         req.on('end', function()  {
-            util.log('raw: ' + data);
+            //util.log('raw: ' + data);
             
             var json = qs.parse(data);
             
-            util.log('json: ' + json);
+            //util.log('json: ' + util.inspect(json));
             
-            /*callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
-                console.log(data);
-            }, data);*/
-        });
+            callAPI('POST', '/elements/api-v2/hubs/documents/files', getHeaders(ele), params, function(data) {
+                console.log('Uploade File Response: ' + data);
+            }, json);
+            
+            
+        
+            req.on('close', function() {
+                console.log('req closed');
+            });
+        });*/
+        
         
         return;
         
@@ -391,9 +441,14 @@ getHeaders = function(element, postdata) {
     authVal += 'User ' + userSecret + ', Organization ' +organizationSecret
 
     var header = {
-        'Authorization' : authVal
+        'Authorization' : authVal,
+        'Content-Type' : 'multipart/form-data'
     };
 
+    ////////////////////////////////////////////////
+    // Commented out as we are now sending Binary //
+    ////////////////////////////////////////////////
+    
     /*if(postdata != null)
     {
         for (var key in postdata.file[0].headers) {
@@ -427,6 +482,8 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
     {
         path +='?'+qs.stringify(params);
     }
+    
+    jsondata = JSON.stringify(jsondata);
 
     var options = {
         hostname: 'qa.cloud-elements.com',
@@ -443,7 +500,7 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
 
         res.setEncoding('utf8');
         res.on('data', function (data) {
-            console.log('BODY: ' + data);
+            //console.log('BODY: ' + data);
             cb(JSON.parse(data));
         });
     });

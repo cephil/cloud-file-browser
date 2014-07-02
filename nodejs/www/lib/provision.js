@@ -432,6 +432,7 @@ var server = (function() {
         uploadFile: function(element, path, file, cb, cbArgs) {
 
             var params = new FormData();
+            
             params.append('file', file);
 
             var callbackArgs = {
