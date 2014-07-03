@@ -80,10 +80,11 @@ var CloudElements = (function() {
 
         initCallback: function(data, cbArgs) {
 
+            var docservices = [];
+            var docservicesnames = [];
+            
             cedocumentconfig = data;
-
-            var docservices = [],
-                docservicesnames = [];
+            
             for(var x in data)
             {
                 docservices.push(x);
@@ -105,17 +106,20 @@ var provision = (function() {
     var lastCallbackArgs = null;
     _provision = {
         isTokenPresentForElement: function(element) {
+            
             var eleObj = CloudElements.getConfig()[element];
             return eleObj.present;
 
         },
 
         getElementDetails: function(element) {
+            
             var eleObj = CloudElements.getConfig()[element];
             return eleObj;
         },
 
         setTokenToElement: function(element, token) {
+            
             var eleObj = CloudElements.getConfig()[element];
             eleObj['present'] = true;
 
@@ -123,22 +127,24 @@ var provision = (function() {
         },
 
         getParamsFromURI: function(queryparams) {
+            
             var uri = decodeURI(queryparams);
             var chunks = uri.split('&');
             var params = Object();
 
             for (var i=0; i < chunks.length ; i++) {
+                
                 var chunk = chunks[i].split('=');
+                
                 if(chunk[0].search("\\[\\]") !== -1) {
                     if( typeof params[chunk[0]] === 'undefined' ) {
                         params[chunk[0]] = [chunk[1]];
-
-                    } else {
+                    } 
+                    else {
                         params[chunk[0]].push(chunk[1]);
                     }
-
-
-                } else {
+                } 
+                else {
                     params[chunk[0]] = chunk[1];
                 }
             }
@@ -241,8 +247,6 @@ var server = (function() {
      */
     _server = {
 
-        //TODO Handle for IE CROS http://www.html5rocks.com/en/tutorials/cors/
-
         call: function(path, methodtype, headers, params, cb, cbArgs) {
 
             if(server.isNullAndUndef(methodtype))
@@ -256,23 +260,22 @@ var server = (function() {
                 cache: false,
                 contentType: 'application/json'
             })
-                .done(function(data) {
-                    console.log(data);
-                    if(server.isNullAndUndef(data.results))
-                        cb(data, cbArgs);
-                    else
-                        cb(data.results, cbArgs);
+            .done(function(data) {
+                console.log(data);
+                if(server.isNullAndUndef(data.results))
+                    cb(data, cbArgs);
+                else
+                    cb(data.results, cbArgs);
 
-                })
-                .error(function(data){
-                    console.log(data.status + ' error on ' + path);
-                    _server.handleFailure(data, cb, cbArgs);
-                });
+            })
+            .error(function(data){
+                console.log(data.status + ' error on ' + path);
+                _server.handleFailure(data, cb, cbArgs);
+            });
         },
 
         callUpload: function(path, methodtype, headers, params, cb, cbArgs) {
 
-            
             var proxy = $.ajax({
                 url: server.getUrl(path),
                 type: methodtype,
@@ -281,20 +284,19 @@ var server = (function() {
                 cache: false,
                 processData: false,
                 contentType: false
-                //contentType: 'multipart/form-data; boundary=----WebKitFormBoundarymSI41Af84OjbuPgt'
             })
-                .done(function(data) {
-                    console.log(data);
-                    if(server.isNullAndUndef(data.results))
-                        cb(data, cbArgs);
-                    else
-                        cb(data.results, cbArgs);
+            .done(function(data) {
+                console.log(data);
+                if(server.isNullAndUndef(data.results))
+                    cb(data, cbArgs);
+                else
+                    cb(data.results, cbArgs);
 
-                })
-                .error(function(data){
-                    console.log(data.status + ' error on ' + path);
-                    _server.handleFailure(data, cb, cbArgs);
-                });
+            })
+            .error(function(data){
+                console.log(data.status + ' error on ' + path);
+                _server.handleFailure(data, cb, cbArgs);
+            });
         },
 
         callThumbnail: function(url, cb) {
@@ -304,28 +306,25 @@ var server = (function() {
                 type: 'Get',
                 cache: false
             })
-                .done(function(data) {
-                    console.log(data);
+            .done(function(data) {
+                console.log(data);
+                cb('true');
+            })
+            .error(function(data) {
+
+                // Temporary catch for X-DOMAIN
+                if (data.status === 0) {
                     cb('true');
-                })
-                .error(function(data) {
-
-                    // Temporary catch for X-DOMAIN
-                    if (data.status === 0) {
-                        cb('true');
-                    }
-                    else {
-                        cb('false');
-                        cloudFileBrowser.displayError('Error loading thumbnail!');
-                    }
-                });
-
+                }
+                else {
+                    cb('false');
+                    cloudFileBrowser.displayError('Error loading thumbnail!');
+                }
+            });
         },
 
-        handleFailure: function(response, cb, cbArgs)
-        {
-            if (response.status == -1)
-            {
+        handleFailure: function(response, cb, cbArgs) {
+            if (response.status == -1) {
                 // This is a timeout, we can't expect an HTTP error code in the status field
                 console.error('The server has not responded and ' +
                     'your request has timed out.' +
@@ -334,8 +333,7 @@ var server = (function() {
 
                 cloudFileBrowser.displayError(response.statusText);
             }
-            else if (response.status == 0)
-            {
+            else if (response.status == 0) {
                 // This is a network error of some kind (connection lost for example) and
                 // we can't expect an HTTP error code in the status field
                 console.error('A communication error has occurred and ' +
@@ -345,16 +343,13 @@ var server = (function() {
 
                 cloudFileBrowser.displayError(response.statusText);
             }
-            else
-            {
-                if(server.isNullAndUndef(response.responseText))
-                {
+            else {
+                if(server.isNullAndUndef(response.responseText)) {
                     cb(response, cbArgs);
 
                     cloudFileBrowser.displayError(response.statusText);
                 }
-                else
-                {
+                else {
                     console.error('The server was unable to process this request. ' +
                         'Please contact your representative. (' +
                         response.status + '/' + response.statusText + ')');
@@ -391,9 +386,7 @@ var server = (function() {
         },
 
         _downloadCallback: function(data) {
-//            var win = window.open();
-//            win.location=data.value;
-
+            
             var hiddenIFrameID = 'hiddenDownloader',
                 iframe = document.getElementById(hiddenIFrameID);
             if (iframe === null) {

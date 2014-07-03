@@ -236,14 +236,15 @@ var cloudFileBrowser = (function() {
             });
 
             $('.listTable ul li.checkbox').on('change', function() {
+                
                 var selectedPath = this.nextSibling.nextSibling.textContent;
-                if(cloudFileBrowser.selectedFiles[element] == null
-                    || cloudFileBrowser.selectedFiles[element] == undefined)
+                var position = $.inArray(selectedPath, cloudFileBrowser.selectedFiles[element]);
+                
+                if(cloudFileBrowser.selectedFiles[element] == null || cloudFileBrowser.selectedFiles[element] == undefined)
                 {
                     cloudFileBrowser.selectedFiles[element] = new Array();
                 }
-
-                var position = $.inArray(selectedPath, cloudFileBrowser.selectedFiles[element]);
+                
                 if(~position)
                 {
                     cloudFileBrowser.selectedFiles[element].splice(position, 1);
@@ -257,27 +258,13 @@ var cloudFileBrowser = (function() {
 
         displayThumbnail: function(data) {
 
-            // CALL TO TEST STATUS OF URL
-            //TODO Check if we need test thumbnail call
-//            provision.testThumbnail(data.value, function(status) {
-//
-//                if (status == 'true') {
-
-                    var extlower = extension.toLowerCase();
-                    if (extlower == "jpg" | extlower == "gif" | extlower == "jpeg" | extlower == "png")
-                    {
-
-                        $('#file-info .preview').append('<img src="' + data.cloudElementsLink + '">');
-                    }
-
-//                }
-//                else {
-//                    //cloudFileBrowser.displayError("Couldn't display thumbnail. Please try again.");
-//                    console.log('error connecting to thumbnail');
-//                }
-//
-//            });
-
+            var extlower = extension.toLowerCase();
+            
+            if (extlower == "jpg" | extlower == "gif" | extlower == "jpeg" | extlower == "png")
+            {
+                $('#file-info .preview').append('<img src="' + data.cloudElementsLink + '">');
+            }
+            
         },
 
         provisionEl: function(element) {
@@ -285,11 +272,11 @@ var cloudFileBrowser = (function() {
             // Provision the element based upon its service array name
             // Note -- Demo only, always returns successful
 
-            $('#loading').addClass('show');
-
             var callbackArgs = {
                 'element' : element
             };
+            
+            $('#loading').addClass('show');
             provision.createInstance(element, cloudFileBrowser.handleOnProvision, callbackArgs);
         },
 
@@ -306,7 +293,10 @@ var cloudFileBrowser = (function() {
         },
 
         drawEl: function(data, element, path) {
-
+            
+            // Call for table from helper class
+            var tableHTML = this.buildTable(data, true, path, element);
+            
             if (!data || !element) console.warn('Cannot draw element, Data or Element missing!');
 
             // Clean up load screen
@@ -315,10 +305,6 @@ var cloudFileBrowser = (function() {
             //TODO May be a better way of refreshing the data, this is needed for folder click
             $('div.' + element + ' .listTable, div.' + element + ' .breadcrumb').remove();
 
-            // Call for table from helper class
-            var tableHTML = this.buildTable(data, true, path, element);
-
-            // Append data returned and start screen adjustment via CSS3 class
             $(container + ' .' + element).addClass('provisioned').append(tableHTML);
 
             this.animateTable(element);
@@ -332,8 +318,8 @@ var cloudFileBrowser = (function() {
 
             if (isNew == true) {
 
-                var tableHTML = '',
-                    trailingpath;
+                var tableHTML = '';
+                var trailingpath;
 
                 cloudFileBrowser.selectedFiles[element] = new Array();
 
@@ -343,26 +329,23 @@ var cloudFileBrowser = (function() {
                     '<ul>';
 
                 if(path != null || path != undefined) {
-
+                    
                     var selectedPathRes = path.split("/");
 
                     for (var i = 0; i < selectedPathRes.length; i++) {
-
+                        
                         var selectedPathResRec = selectedPathRes[i];
 
                         if(i == 0 && selectedPathResRec == '') {
-
                             trailingpath = '/';
                             tableHTML += '<li class="home">Home</li>';
                         }
                         else if(selectedPathResRec != null && selectedPathResRec != '') {
-
-                            if(trailingpath == '/')
-                            {
+                            
+                            if(trailingpath == '/') {
                                 trailingpath = trailingpath + selectedPathResRec;
                             }
-                            else
-                            {
+                            else {
                                 trailingpath = trailingpath + '/' + selectedPathResRec;
                             }
 
@@ -375,9 +358,8 @@ var cloudFileBrowser = (function() {
                 {
                     tableHTML += '<li>/</li>';
                 }
+                
                 tableHTML += '</ul></div>';
-
-
                 tableHTML += '<div class="listTable">' +
                     '<ul>' +
                     '<li></li>' +
@@ -390,15 +372,19 @@ var cloudFileBrowser = (function() {
                 // Loop for table rows //
                 /////////////////////////
                 for (var i=0; i < data.length; i++) {
+                    
                     var objItm = data[i];
 
                     tableHTML += '<ul draggable="true">';
-                    if(objItm.directory)
+                    
+                    if(objItm.directory) {
                         tableHTML += '<li class="checkbox"></li>' +
                             '<li class="foldername">';
-                    else
+                    }
+                    else {
                         tableHTML += '<li class="checkbox"><input type="checkbox"></li>' +
-                            '<li class="filename">';
+                            '<li class="filename">';   
+                    }
 
                     tableHTML += objItm.name + '</li>' +
                         '<li>' + objItm.path + '</li>' +
@@ -409,15 +395,14 @@ var cloudFileBrowser = (function() {
             else {
 
                 var tableHTML = '';
-
                 var currentIndex = $('.listTable ul').length;
 
                 for (var i=0; i < data.length; i++) {
                     tableHTML += '<ul draggable="true" class="loading '+ data[i].name+'">' +
-                        '<li class="checkbox"><input type="checkbox"></li>' +
-                        '<li class="filename">' + data[i].name + '</li>' +
-                        '<li>Uploading...</li>' +
-                        '</ul>';
+                                    '<li class="checkbox"><input type="checkbox"></li>' +
+                                    '<li class="filename">' + data[i].name + '</li>' +
+                                    '<li>Uploading...</li>' +
+                                    '</ul>';
 
                     var cbArgs = {
                         'tableHTML' : tableHTML,
@@ -432,20 +417,20 @@ var cloudFileBrowser = (function() {
 
             tableHTML += '</div></div>';
 
-            // Finished building, return table string
             return tableHTML;
 
         },
 
         handleUploadComplete: function(cbArgs) {
 
+            var tableList = $('.listTable ul');
+            var ulElement = tableList[cbArgs.currentIndex];
+            
             if($('.listTable ul.loading') != null)
             {
                 $('.listTable ul.loading').removeClass('loading');
             }
 
-            var tableList = $('.listTable ul');
-            var ulElement = tableList[cbArgs.currentIndex];
             if(ulElement != null)
             {
                 ulElement.innerHTML = '<li class="checkbox"><input type="checkbox"></li>' +
@@ -466,6 +451,7 @@ var cloudFileBrowser = (function() {
                 delay += 50;
 
             }
+            
             setTimeout(function() {
                 $('.' + element + ' .listTable .scrollPanel > ul').addClass('on');
             }, 50);
@@ -478,15 +464,11 @@ var cloudFileBrowser = (function() {
             $('.addFiles').unbind('change');
 
             $('.addFilesButton').on('click', function() {
-
                 $('.' + element + ' .addFiles').trigger('click');
-
             });
 
             $('.addFiles').on('change', function(e) {
-
                 cloudFileBrowser.uploadFiles(element, path, this.files);
-
             });
 
             $('.selectFilesButton').on('click', function() {
@@ -539,7 +521,6 @@ var cloudFileBrowser = (function() {
                 $('#error').removeClass('show');
             }, 2500);
 
-
         },
 
         uploadFiles: function(element, path, files) {
@@ -547,7 +528,7 @@ var cloudFileBrowser = (function() {
             var tableHTML = this.buildTable(files, false, path, element);
 
             $('div.' + element + ' .listTable').append(tableHTML);
-
+            
             this.animateTable(element);
 
         }

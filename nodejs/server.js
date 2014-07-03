@@ -44,25 +44,21 @@ var https = require("https");
 var connect = require("connect");
 var express = require("express");
 var cookieParser = require("cookie-parser");
-var bodyParser = require("body-parser");
 var serveStatic = require("serve-static");
 var url = require("url");
 var qs = require('querystring');
-//var Busboy = require('busboy');
-//var rest = require('restler');
-
-//var multiparty = require('multiparty');
 var util = require('util');
-
-
 var app = express();
+
+///////////////////////////////////////////////////
+// SET HEADERS ON NODE TO ACCEPT FROM ANY ORIGIN //
+///////////////////////////////////////////////////
 
 var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // intercept OPTIONS method
     if ('OPTIONS' == req.method) {
       res.send(200);
     }
@@ -70,7 +66,6 @@ var allowCrossDomain = function(req, res, next) {
       next();
     }
 };
-
 
 /////////////////////////////////////////////////
 // CONFIG ///////////////////////////////////////
@@ -88,7 +83,15 @@ var allowCrossDomain = function(req, res, next) {
 
     organizationSecret = '98c89f16608df03b0248b74ecaf6a79b',
     userSecret = '846708bb4a1da71d70286bc5bb0c51bf',
-    documents = {
+        
+    //////////////////////////////////////////////////////////////////////////////////
+    // HOW TO DEFINE ELEMENTS                                                       //
+    //                                                                              //
+    // Note: Here is where we define which elements will be visible on the File     //
+    //       Browser UI. Example usage shown below.                                 //
+    //////////////////////////////////////////////////////////////////////////////////
+    
+        documents = {
             'box': {
                 'elementToken' : 'd2d3ec396a33f70d00f91a27e46bdb24'
             },
@@ -103,13 +106,13 @@ var allowCrossDomain = function(req, res, next) {
                 'callbackUrl': 'http://localhost:8080/callback.html'
             },
 
-//            'onedrive' : {
-//
-//            },
-//
-//            'sharepoint' : {
-//
-//            }
+            'onedrive' : {
+                
+            },
+
+            'sharepoint' : {
+
+            }
     }
     
 
@@ -118,9 +121,6 @@ var allowCrossDomain = function(req, res, next) {
 /////////////////////////////////////////////////
     
 app.use(allowCrossDomain);
-app.use(bodyParser.urlencoded());
-app.use(bodyParser.json());
-//app.use(bodyParser({ keepExtensions: true, uploadDir: "/elements/upload" }));  
 app.use(connect.cookieParser());
 app.use(connect.session({ secret: organizationSecret }));
 
@@ -129,155 +129,184 @@ app.use(connect.session({ secret: organizationSecret }));
 // ROUTER FOR API ///////////////////////////////
 /////////////////////////////////////////////////
 
-var port = process.env.port || 8888;
-var router = express.Router();
+    /////////////////////////////////////////////////////////
+    // Define port for Node.js ajax requests & HTTP Server //
+    /////////////////////////////////////////////////////////
 
-app.route
-app.all('*', function(req, res) {
+    var restPort = process.env.port || 8888;
+    var httpPort = 8080;
 
-    if ( typeof String.prototype.startsWith != 'function' ) {
-        String.prototype.startsWith = function( str ) {
-            return this.substring( 0, str.length ) === str;
-        }
-    };
+    /////////////////////////////////////////////////////////////
+    // Catch all requests and route to Cloud Elements API V2   //
+    //                                                         //
+    //  Note: In this method, we are extracting the URL from   //
+    //        the client reqiuest, and transforming it to the  //
+    //        correct Cloud Elements API.                      //
+    //                                                         //
+    //        We are using app.all to catch *ANY* request      //
+    //        and letting the Cloud Elements REST API          //
+    //        handle any errors/incorrect URLs.                //
+    /////////////////////////////////////////////////////////////
 
-    var path = req.url;
-    var parts = url.parse(req.url, true);
-    var ele = parts.query['element'];
+    app.all('*', function(req, res) {
 
-    /////////////////////////////////////////////////
-    //This request is for displaying the required providers on UI
-    /////////////////////////////////////////////////
-    if(parts.pathname == '/elements/providers')
-    {
-        //Constructing the documents to be shown on UI
-        var respdocuments = new Object;
-        for(var x in documents)
-        {
-            respdocuments[x] = new Object;
-            if(documents[x].elementToken != null)
-            {
-                respdocuments[x].present = true;
+        if ( typeof String.prototype.startsWith != 'function' ) {
+            String.prototype.startsWith = function( str ) {
+                return this.substring( 0, str.length ) === str;
             }
-        }
-        res.json(respdocuments);
-    }
-    /////////////////////////////////////////////////
-    //This method is used for getting the file contents (folders or files)
-    /////////////////////////////////////////////////
-    else if(parts.pathname == '/elements/contents')
-    {
-        var params = {
-            'path' : parts.query['path']
-        }
-
-        callAPI('Get', '/elements/api-v2/hubs/documents/folders/contents', getHeaders(ele), params, function(data) {
-            res.json(data);
-        });
-    }
-    /////////////////////////////////////////////////
-    //This method is used for getting the download links for a file
-    /////////////////////////////////////////////////
-    else if(parts.pathname == '/elements/links')
-    {
-        var params = {
-            'path' : parts.query['path']
-        }
-
-        callAPI('Get', '/elements/api-v2/hubs/documents/files/links', getHeaders(ele), params, function(data) {
-            res.json(data);
-        });
-    }
-    /////////////////////////////////////////////////
-    // This method is for getting the OAuth URL for requesting the User access
-    /////////////////////////////////////////////////
-    else if(parts.pathname == '/elements/oauth')
-    {
-        var elementDetails = getElementDetails(ele);
-
-        var params = {
-            'elementKeyOrId': ele,
-            'apiKey' : elementDetails.apiKey,
-            'apiSecret': elementDetails.apiSecret,
-            'callbackUrl': elementDetails.callbackUrl
-        } 
-
-        callAPI('Get', '/elements/api-v2/elements/'+ele+'/oauth', getHeaders(ele), params, function(data) {
-            res.json(data);
-        });
-    }
-    /////////////////////////////////////////////////
-    // This method is for creating the element instance after the user has approved the access
-    /////////////////////////////////////////////////
-    else if(parts.pathname == '/elements/instances')
-    {
-        var elementDetails = getElementDetails(ele);
-
-        var elementProvision = {
-            'configs': [
-                {
-                    'key' : 'oauth.api.key',
-                    propertyValue : elementDetails.apiKey
-                },
-                {
-                    'key' : 'oauth.api.secret',
-                    propertyValue : elementDetails.apiSecret
-                },
-                {
-                    'key' : 'oauth.callback.url',
-                    propertyValue : elementDetails.callbackUrl
-                }
-            ],
-            'element': {
-                "key" : ele
-            },
-            'name': ele
         };
 
-        var postdata = JSON.stringify(elementProvision);
+        var path = req.url;
+        var parts = url.parse(req.url, true);
+        var ele = parts.query['element'];
 
-        var params = {
-            'code': parts.query['code']
+        /////////////////////////////////////////////////////////////////
+        // This request is for displaying the required providers on UI //
+        /////////////////////////////////////////////////////////////////
+
+        if(parts.pathname == '/elements/providers') {
+
+            //Constructing the documents to be shown on UI
+            var respdocuments = new Object;
+
+            for(var x in documents)
+            {
+                respdocuments[x] = new Object;
+                if(documents[x].elementToken != null)
+                {
+                    respdocuments[x].present = true;
+                }
+            }
+            res.json(respdocuments);
         }
 
-        callAPI('POST', '/elements/api-v2/instances', getHeaders(ele, postdata), params, function(data) {
+        //////////////////////////////////////////////////////////////////////////
+        // This method is used for getting the file contents (folders or files) //
+        //////////////////////////////////////////////////////////////////////////
 
-            setElementToken(ele, data.token);
+        else if(parts.pathname == '/elements/contents') {
 
-            res.json(data);
+            var params = {
+                'path' : parts.query['path']
+            }
 
-        }, postdata);
-    }
-    /////////////////////////////////////////////////
-    // This method is for Uploading a file
-    /////////////////////////////////////////////////
-    else if(parts.pathname == '/elements/upload')
-    {
-        uploadFile('/elements/api-v2/hubs/documents/files', ele, req, function(data) {
+            callAPI('Get', '/elements/api-v2/hubs/documents/folders/contents', getHeaders(ele), params, function(data) {
+                console.log('CFB: Retrieved Listing for', ele);
+                res.json(data);
+            });
+        }
 
-            //setElementToken(ele, data.token);
+        //////////////////////////////////////////////////////////////////
+        //This method is used for getting the download links for a file //
+        //////////////////////////////////////////////////////////////////
 
-            console.log(data);
+        else if(parts.pathname == '/elements/links') {
 
-            res.json(data);
+            var params = {
+                'path' : parts.query['path']
+            }
 
-        });
-    }
-    else
-    {
-        callAPI('Get', req.url, req.headers, ele, function(data) {
-            console.log('callback recieved', req.session);
+            callAPI('Get', '/elements/api-v2/hubs/documents/files/links', getHeaders(ele), params, function(data) {
+                console.log('CFB: Retrieved download links', ele);
+                res.json(data);
+            });
+        }
 
-            console.log(req);
-            res.json(data);
-        });
-    }
-});
+        /////////////////////////////////////////////////////////////////////////////
+        // This method is for getting the OAuth URL for requesting the User access //
+        /////////////////////////////////////////////////////////////////////////////
 
-app.listen(port);
+        else if(parts.pathname == '/elements/oauth') {
+
+            var elementDetails = getElementDetails(ele);
+            var params = {
+                'elementKeyOrId': ele,
+                'apiKey' : elementDetails.apiKey,
+                'apiSecret': elementDetails.apiSecret,
+                'callbackUrl': elementDetails.callbackUrl
+            } 
+
+            callAPI('Get', '/elements/api-v2/elements/'+ele+'/oauth', getHeaders(ele), params, function(data) {
+                res.json(data);
+            });
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        // This method is for creating the element instance after the user has approved the access //
+        /////////////////////////////////////////////////////////////////////////////////////////////
+
+        else if(parts.pathname == '/elements/instances') {
+
+            var elementDetails = getElementDetails(ele);
+            var elementProvision = {
+                'configs': [
+                    {
+                        'key' : 'oauth.api.key',
+                        propertyValue : elementDetails.apiKey
+                    },
+                    {
+                        'key' : 'oauth.api.secret',
+                        propertyValue : elementDetails.apiSecret
+                    },
+                    {
+                        'key' : 'oauth.callback.url',
+                        propertyValue : elementDetails.callbackUrl
+                    }
+                ],
+                'element': {
+                    "key" : ele
+                },
+                'name': ele
+            };
+            var postdata = JSON.stringify(elementProvision);
+            var params = {
+                'code': parts.query['code']
+            }
+
+            callAPI('POST', '/elements/api-v2/instances', getHeaders(ele, postdata), params, function(data) {
+
+                console.log('CFB: Retrieved Instances: ', util.inpsect(data))
+
+                setElementToken(ele, data.token);
+                res.json(data);
+            }, postdata);
+        }
+
+        /////////////////////////////////////////
+        // This method is for Uploading a file //
+        /////////////////////////////////////////
+
+        else if(parts.pathname == '/elements/upload') {
+            uploadFile('/elements/api-v2/hubs/documents/files', ele, req, function(data) {
+                console.log(data);
+                res.json(data);
+
+            });
+        }
+        else {
+            callAPI('Get', req.url, req.headers, ele, function(data) {
+                console.log('callback recieved', req.session);
+                console.log(req);
+                res.json(data);
+            });
+        }
+    });
+
+
+//////////////////////
+// INIT REST Server //
+//////////////////////
+
+    app.listen(restPort, function() {
+        console.log(' ');
+        console.log('*****************************************');
+        console.log('***** Cloud File Browser - 0.8 BETA *****');
+        console.log('*****     http://filebrowser.io     *****');
+        console.log('*****************************************');
+        console.log('** REST Server started on port: ', restPort, ' **');
+    });
 
 /////////////////////////////////////////////////
-// AUTHENTICATION ///////////////////////////////
+// AJAX METHODS & HELPERS ///////////////////////
 /////////////////////////////////////////////////
 
 getHeaders = function(element, postdata) {
@@ -293,19 +322,6 @@ getHeaders = function(element, postdata) {
     var header = {
         'Authorization' : authVal
     };
-
-    ////////////////////////////////////////////////
-    // Commented out as we are now sending Binary //
-    ////////////////////////////////////////////////
-    
-    /*if(postdata != null)
-    {
-        for (var key in postdata.file[0].headers) {
-            header[key] = postdata.file[0].headers[key];
-        }
-        
-        header['content-length'] = postdata.file[0].size; 
-    }*/
     
     return header;
 },
@@ -325,14 +341,11 @@ getElementDetails = function(element) {
     return documents[element];
 },
 
-callAPI = function(method, path, headers, params, cb, jsondata) {
+callAPI = function(method, path, headers, params, cb) {
 
-    if(params != null)
-    {
+    if(params != null) {
         path +='?'+qs.stringify(params);
     }
-    
-    jsondata = JSON.stringify(jsondata);
 
     var options = {
         hostname: 'qa.cloud-elements.com',
@@ -341,8 +354,6 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
         method: method,
         headers : headers
     };
-
-    //console.log(options);
 
     var req = https.request(options, function(res) {
 
@@ -355,13 +366,7 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
 
     req.on('error', function(e) {
         console.log('problem with request: ' + e);
-    });
-
-    //For POST requests
-    if(jsondata != null)
-    {
-        req.write(jsondata);
-    }
+    }); 
 
     req.end();
     
@@ -369,75 +374,59 @@ callAPI = function(method, path, headers, params, cb, jsondata) {
     
 uploadFile = function(path, ele, req, cb) {
         
-        var headers = getHeaders(ele);
-        var uploadParams = url.parse(req.url).search;
-        
-        headers['content-type'] = req.headers['content-type']
-        headers['content-length'] = req.headers['content-length']
-        
-        console.log('out headers: ', headers);
-        
-        var options = {
-            hostname: 'qa.cloud-elements.com',
-            port: 443,
-            path: '/elements/api-v2/hubs/documents/files' + uploadParams,
-            method: 'POST',
-            headers : headers
-        };
+    var headers = getHeaders(ele);
+    var uploadParams = url.parse(req.url).search;
 
-        
-        console.log('options: ', options);
-        console.log('params: ', uploadParams);
-        
-        req.on('error', function() { console.log("got error!!!!!"); });
-        req.on('close', function() { console.log("got close!!!!!"); });
+    headers['content-type'] = req.headers['content-type']
+    headers['content-length'] = req.headers['content-length']
 
-        var reqOut = https.request(options, function(res) {
-            
-            var jsonData = '';
-            
-            console.log("connection established!");
-            console.log("got headers: ", res.headers);
-            console.log("got response code: ", res.statusCode);
+    console.log('out headers: ', headers);
 
-            res.setEncoding('utf8');
-            res.on('data', function (chunk) {
-                console.log('data recieved: ', chunk);
-                jsonData += chunk;
-            });
-            res.on('error', function (err) {
-                console.log('outgoing error', err);
-            });
-            res.on('end', function() {
-                console.log("res ended");
-                cb(JSON.parse(jsonData));
-            });
+    var options = {
+        hostname: 'qa.cloud-elements.com',
+        port: 443,
+        path: '/elements/api-v2/hubs/documents/files' + uploadParams,
+        method: 'POST',
+        headers : headers
+    };
+
+    var reqOut = https.request(options, function(res) {
+
+        var jsonData = '';
+
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+            console.log('CFB: Data Recieved: ', chunk);
+            jsonData += chunk;
         });
+        res.on('error', function (err) {
+            console.log('CFB: Outgoing Error', err);
+        });
+        res.on('end', function() {
+            console.log("CFB: End of Response");
+            cb(JSON.parse(jsonData));
+        });
+    });
 
-        req.on('data', function(chunk) {
-            console.log(chunk);
-            console.log('chunk to string: ', chunk.toString());
-            reqOut.write(chunk.toString());
-        });
-        
-        req.on('end', function() {
-            console.log("got end!!!!!");
-            reqOut.end();
-        });
+    req.on('data', function(chunk) {
+        console.log('chunk to string: ', chunk.toString());
+        reqOut.write(chunk.toString());
+    });
 
-        reqOut.on('error', function(e) {
-            console.log('problem with request: ' + e);
-        });
-        
-        console.log("finished setup");
-},
-    
-uploadComplete = function(err, res, body) {
-    console.log(body);   
+    req.on('end', function() {
+        reqOut.end();
+    });
+
+    reqOut.on('error', function(e) {
+        console.log('CFB: problem with request: ' + e);
+    });
 }
 
 /////////////////////////////////////////////////
 // SERVER START /////////////////////////////////
 /////////////////////////////////////////////////
 
-connect().use(serveStatic('www')).listen(8080);
+connect().use(serveStatic('www')).listen(httpPort, function() {
+    console.log('** HTTP Server started on port: ', httpPort, ' **');
+    console.log('*****************************************');
+});
