@@ -20,7 +20,7 @@ the License.
 ##########################
 ##         DEMO         ##
 ##########################
-Cloud File Browser Demo  <http://cloudfilebrowser.io>
+Cloud File Browser Demo  <http://filebrowser.io>
 
 
 ##########################
